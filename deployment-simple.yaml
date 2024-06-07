@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: woocommerce-shop-crawler
+  labels:
+    app: woocommerce-shop-crawler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: woocommerce-shop-crawler
+  template:
+    metadata:
+      labels:
+        app: woocommerce-shop-crawler
+    spec:
+      containers:
+      - name: woocommerce-shop-crawler
+        image: your-dockerhub-username/woocommerce-shop-crawler:latest
+        ports:
+        - containerPort: 80
+        command: ["python"]
+        args: ["app/main.py", "--help"]

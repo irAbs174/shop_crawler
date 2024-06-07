@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: woocommerce-shop-crawler
+spec:
+  selector:
+    app: woocommerce-shop-crawler
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
