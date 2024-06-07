@@ -1,0 +1,1 @@
+pip3 install django flask bs4 requests
