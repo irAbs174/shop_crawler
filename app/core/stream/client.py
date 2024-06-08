@@ -16,17 +16,14 @@ def run_client():
             # Automatic message to be sent to the server
             msg = "Auto message"
             client.send(msg.encode("utf-8")[:1024])
-            
             # Receive message from the server
             response = client.recv(1024)
             response = response.decode("utf-8")
-            
             # If server sent us "closed" in the payload, break out of the loop and close our socket
             if response.lower() == "closed":
                 break
             
             print(f"Received: {response}")
-
             # Wait for one second before sending the next message
             time.sleep(1)
     finally:
