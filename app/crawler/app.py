@@ -25,7 +25,8 @@ def main():
     elif option == '--test':
         handle_test()
     elif option == '--serve':
-        print('COMING SOON!')
+        from crawler.tools.server import run_server
+        run_server()
     else:
         print(f"Unknown option: {option}\n{help()}")
 
