@@ -28,6 +28,3 @@ def run_server():
     client_socket.close()
     print("Connection to client closed")
     server.close()
-
-
-run_server()
