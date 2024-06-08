@@ -1,30 +1,33 @@
-from flask import Flask, jsonify
-import requests
-from threading import Timer
+from crawler.tools.handle import *
+from help import *
+import sys
 
-app = Flask(__name__)
 
-# Variable to store the data
-data = None
+def main():
+    if len(sys.argv) != 2:
+        print(f'{script_info()}\b{help()}')
+        sys.exit(1)
+    
+    option = sys.argv[1]
+    
+    if option == '--help':
+        print(help())
+    elif option == '--version':
+        print(script_info())
+    elif option == '--crawler':
+        handle_crawler()
+    elif option == '--products-sitemap':
+        handle_products_sitemap()
+    elif option == '--products-list':
+        handle_products_list()
+    elif option == '--product-info':
+        handle_products_info()
+    elif option == '--test':
+        handle_test()
+    elif option == '--serve':
+        print('COMING SOON!')
+    else:
+        print(f"Unknown option: {option}\n{help()}")
 
-# Function to request data from the server
-def fetch_data():
-    global data
-    try:
-        response = requests.get("https://api.example.com/data")  # Replace with your URL
-        data = response.json()
-    except Exception as e:
-        data = {"error": str(e)}
-
-    # Schedule the function to run again in 1 hour (3600 seconds)
-    Timer(3600, fetch_data).start()
-
-# Initial data fetch
-fetch_data()
-
-@app.route('/data', methods=['GET'])
-def get_data():
-    return jsonify(data)
-
-if __name__ == '__main__':
-    app.run(port=8080)
+if __name__ == "__main__":
+    main()
