@@ -1,4 +1,4 @@
-from crawler.tools.functions import *
+from tools.functions import *
 
 
 def handle_crawler():
