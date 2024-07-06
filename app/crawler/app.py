@@ -1,5 +1,5 @@
-from crawler.tools.handle import *
-from help import *
+from tools.handle import *
+from tools.help import *
 import sys
 
 
@@ -25,7 +25,7 @@ def main():
     elif option == '--test':
         handle_test()
     elif option == '--serve':
-        from crawler.tools.server import run_server
+        from crawler.stream.server import run_server
         run_server()
     else:
         print(f"Unknown option: {option}\n{help()}")
