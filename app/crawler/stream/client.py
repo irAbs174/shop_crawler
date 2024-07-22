@@ -9,11 +9,11 @@ def send_message(server_socket):
         if response == "174":
             message = "TARGET_ADDRESS"
             server_socket.send(message.encode('utf-8'))
-        elif response == "TARGET_ADDRESS_DATA":
-            message = "=> ******** END ******** <="
+        elif 'http' in response:
+            message = "=> START CRAWLER !!!! <="
             server_socket.send(message.encode('utf-8'))
         else:
-            message = "=>>>> END <<<<="
+            message = "43543534345345345"
             server_socket.send(message.encode('utf-8'))
         time.sleep(5)
 

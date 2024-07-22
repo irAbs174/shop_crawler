@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Application definition
 
 INSTALLED_APPS = [
+    'target',
     'products',
     'django.contrib.admin',
     'django.contrib.auth',
