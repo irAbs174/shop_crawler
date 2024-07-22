@@ -77,6 +77,65 @@ def get_product_info(product_address):
             'price': price,
             'status': 'موجود',
         }
+    
+def main_dic_modify(products_list):
+    main_dic = []
+    try:
+        for product_address in products_list:
+            product_info = get_product_info(product_address)
+            if product_info:
+                print(product_info)
+                main_dic.append(product_info)
+    except AttributeError as e:
+        print(e)
+        return None
+    return main_dic
+
+def comparison(name, price, main_dic):
+    status = ''
+    try:
+        for i in main_dic:
+            if name in i['name']:
+                if i['price'] < price:
+                    status = 'down'
+                elif i['price'] == price:
+                    status = 'equals'
+        
+        return status
+    except AttributeError as e:
+        print(f"AttributeError: {e}")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+# Test function:
+def serve():
+    address = input("Enter address: \n")
+    target_dic = {}
+    product_name = ''
+
+    while product_name != 'start':
+        # give me required data
+        product_name = input('enter product name:')
+        product_price = input('enter product price:')
+        target_dic[product_name] = int(product_price)
+
+    sitemap_soup = crawler(f'{address}/sitemap_index.xml')
+    if sitemap_soup:
+        #product_sitemaps = get_products_sitemap(sitemap_soup)
+        #products_list = get_products_list(product_sitemaps)
+        #main_dic_modify(product_sitemaps)
+        main_dic = [
+            {'name': 'کوله پشتی لپتاپ Catesigo مدل C13386 - بای کیف', 'price': 2599000, 'status': 'موجود'},
+            {'name': 'کوله پشتی لپتاپ Catesigo مدل C13387 - بای کیف', 'price': 2599000, 'status': 'موجود'}
+        ]
+        for i in target_dic:
+            status = comparison(i, target_dic[i], main_dic)
+            if status == 'down':
+                print(f'=> The {i} product is down !')
+            elif status == 'equals':
+                print(f'=> The {i} product is equals !')
 
 # Test function:
 def test(address):
