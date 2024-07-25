@@ -1,16 +1,13 @@
-import { Component, OnInit, ViewChild, ViewContainerRef, NgModule } from '@angular/core';
-import { LoadingService } from '../loading.service';
 import { DynamicComponentService } from '../dynamic-component.service';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { OrdersComponent } from '../orders/orders.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [
-    FormsModule,
-  ],
+  imports: [OrdersComponent],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+  styleUrl: './home.component.css',
 })
 export class HomeComponent implements OnInit {
 
@@ -18,13 +15,24 @@ export class HomeComponent implements OnInit {
   dynamicComponentContainer!: ViewContainerRef;
 
   constructor(
-    private loadingService: LoadingService,
+    private DynamicComponentLoad : DynamicComponentService,
   ){}
 
-  homeHiddenClass = false;
+  home_hidden = false;
+
+  loadCompomemt(component: any){
+    this.DynamicComponentLoad.loadComponent(this.dynamicComponentContainer, component);
+  }
 
   ngOnInit(): void {
-    this.loadingService.simulateLoading()
+    setTimeout(()=>{
+      this.home_hidden = true;
+      // load orders component
+      this.loadCompomemt(OrdersComponent);
+    }, 1000);
   }
 
 }
+
+
+

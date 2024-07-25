@@ -2,26 +2,26 @@ import { Injectable } from '@angular/core';
 import axios from 'axios';
 
 // Define the type for the phone number payload
-interface dataPayload {
-  data: string[];
+interface PhoneNumberPayload {
+  phoneNumbers: string[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class DataSendService {
+export class PhoneNumberService {
 
   private apiUrl = 'http://your-django-server-url/api/send-phone-number/'; // Replace with your Django endpoint
 
   constructor() { }
 
   // Function to send a POST request with the phone numbers
-  async sendData(data: string): Promise<void> {
-    const payload: dataPayload = {
-      data: [data],
+  async sendPhoneNumbers(phoneNumbers: string[]): Promise<void> {
+    const payload: PhoneNumberPayload = {
+      phoneNumbers: phoneNumbers,
     };
 
-    console.log('=> => => data:', data);
+    console.log('=> => => phoneNumbers:', phoneNumbers);
 
     try {
       const response = await axios.post(this.apiUrl, payload, {
@@ -32,7 +32,10 @@ export class DataSendService {
 
       console.log('Response:', response.data);
     } catch (error) {
-      console.error('Error sending data:', error);
+      console.error('Error sending phone numbers:', error);
     }
   }
 }
+
+
+

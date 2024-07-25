@@ -1,0 +1,16 @@
+<div #dynamicComponentContainer></div>
+<!-- orders.component.html -->
+<div class="orders-container" [hidden]="orders_show">
+  <img src="https://123kif.com/wp-content/uploads/2020/07/123-logo-1.webp" alt="123kif logo" class="logo123">
+  <div>
+    <h2>یکی از گزینه های زیر را انتخاب کنید</h2>
+  <span class="material-icons md-36"></span>
+  </div>
+  <i class="bi bi-webcam-fill"></i>
+      <button (click)="logBtn()" class='btn'>گزارشات </button>
+
+  <button (click)="productsBtn()" class='btn'>محصولات</button>
+
+  <button (click)="targetBtn()" class='btn'>اهداف</button>
+
+</div>

@@ -27,9 +27,15 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/rose-red.css",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "server": "src/main.server.ts",
+            "prerender": true,
+            "ssr": {
+              "entry": "server.ts"
+            }
           },
           "configurations": {
             "production": {
@@ -85,6 +91,7 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/rose-red.css",
               "src/styles.css"
             ],
             "scripts": []
@@ -94,6 +101,6 @@
     }
   },
   "cli": {
-    "analytics": "3b0ce20b-8753-4353-8ebb-70cdf83b1db6"
+    "analytics": "46e7c20f-761f-46ae-a024-7f34d0fee972"
   }
 }

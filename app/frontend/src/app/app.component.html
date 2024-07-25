@@ -1,4 +1,23 @@
 <app-scroll-progress-bar></app-scroll-progress-bar>
 <div class="login-container">
   <div #dynamicComponentContainer></div>
+  <div class="login-box" [class.hidden]="!enterNumber">
+    <img src="https://123kif.com/wp-content/uploads/2020/07/123-logo-1.webp" alt="123kif logo" class="logo">
+    <h2>سامانه رهگیری سفارشات</h2>
+    <input id="phoneNumber" [(ngModel)]="phoneNumber" type="text" placeholder="شماره تماس مانند : 09121234567" class="otp">
+    <h4 class="note">لطفا شماره تماس خود را به همراه صفر وارد نمایید</h4>
+    <button (click)="sendPhoneNumber()" class="submit-btn">ارسال کد تایید</button>
+  </div>
+  <div class="login-box verification-box" [class.hidden]="!VerificationDigits">
+    <img src="https://123kif.com/wp-content/uploads/2020/07/123-logo-1.webp" alt="123kif logo" class="logo">
+    <h2>کد تایید را وارد کنید</h2>
+    <h4 class="note">کد تایید ۴ رقمی از طریق پیامک برای شما ارسال شد</h4>
+    <div class="otp-inputs">
+      <input type="text" maxlength="1" class="otp-input" data-index="0" (input)="digits_set(0, $event)">
+      <input type="text" maxlength="1" class="otp-input" data-index="1" (input)="digits_set(1, $event)">
+      <input type="text" maxlength="1" class="otp-input" data-index="2" (input)="digits_set(2, $event)">
+      <input type="text" maxlength="1" class="otp-input" data-index="3" (input)="digits_set(3, $event)">
+    </div>
+    <button id="submit_digits" class="submit-btn" disabled>تایید کد</button>
+  </div>
 </div>
