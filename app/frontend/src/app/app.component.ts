@@ -1,15 +1,18 @@
-import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewContainerRef, NgModule } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ScrollProgressBarComponent } from './scroll-progress-bar/scroll-progress-bar.component';
-import { LoadingService } from './loading.service';
 import { DynamicComponentService } from './dynamic-component.service';
-
+import { AuthComponent } from './auth/auth.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,
+  imports: [
+    RouterOutlet,
     ScrollProgressBarComponent,
+    AuthComponent,
+    FormsModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -20,7 +23,6 @@ export class AppComponent implements OnInit {
   dynamicComponentContainer!: ViewContainerRef;
 
   constructor(
-    private loadingService: LoadingService,
     private dynamicComponentService: DynamicComponentService,
   ){}
 
@@ -28,7 +30,7 @@ export class AppComponent implements OnInit {
     this.dynamicComponentService.loadComponent(this.dynamicComponentContainer, component);
   }
 
-  ngOnInit(){
-    this.loadingService.simulateLoading();
+  ngOnInit(): void {
+    this.loadComponent(AuthComponent)
   }
 }
