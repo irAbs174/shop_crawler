@@ -1,6 +1,8 @@
-import socket
+import http.server
+import socketserver
 import threading
 import time
+
 import django
 import sys
 import os
@@ -10,26 +12,76 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
 django.setup()
 
+from func import *
 from products.models import SiteMap, Product
 from target.models import TargetModel
 from jobs.models import JobsModel
 from logs.models import LogModel
 
+class GetHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b"Hello, world!")
+        return
+
+
+def perform_crawl():
+    while True:
+        print("Performing scheduled crawler...")
+        job = JobsModel.objects.first()
+        jobName = job.jobName
+        jobArg = job.jobArg
+        if jobName == 'crawl':
+            sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml')
+            product_sitemap = get_products_sitemap(sitemap_soup)
+            for i in product_sitemap:
+                SiteMap.objects.create(target=jobArg, siteMapUrl=i)
+                print(f'site map {i} saved to db')
+            
+            products_list = get_products_list(product_sitemaps)
+            for i in products_list:
+                Product.objects.create(product_url=i, product_parent=jobArg)
+                print(f'product url: {i} saved to db')
+
+            for i in range(len(Product.objects.all().filter(product_parent=jobArg))):
+                info = get_product_info(i.product_url)
+                Product.objects.all().filter(product_parent=jobArg).update(
+                    product_name=info['name'],
+                    product_price=info['price'],
+                    product_stock=info['stock'],
+                    product_url=jobArg,
+                )
+                print(f'save product detail {info}')
+
+        # Add your job logic here
+        time.sleep(3 * 60 * 60)  # Sleep for 3 hours
+
+# Start the HTTP server
+def start_server():
+    with socketserver.TCPServer(("", 8080), GetHandler) as httpd:
+        print(f"Serving on port 8080")
+        perform_crawl()
+        httpd.serve_forever()
+
+# Start the job in a separate thread
+job_thread = threading.Thread(target=perform_crawl)
+job_thread.daemon = True 
+job_thread.start()
+
+start_server()
+
+'''
 def handle_client(client_socket):
     while True:
         try:
-            job = JobsModel.objects.first()
-            jobName = job.jobName
-            jobArg = job.jobArg
-            
-            if jobName == 'crawl':
+
                 client_socket.send(f"target=>{jobArg}".encode('utf-8'))
                 message = client_socket.recv(1024).decode('utf-8')
 
                 if 'sitemap_url=>' in message:
-                    sitemap = message.split('=>')[1]
-                    SiteMap.objects.create(target=jobArg, siteMapUrl=sitemap)
-                    print(f'site map {sitemap} saved to db')
+
                 
                 if 'give_me_sitemap_to_crawl' in message:
                     for i in SiteMap.objects.filter(target=jobArg):
@@ -38,13 +90,10 @@ def handle_client(client_socket):
 
                 if 'product_url=>' in message:
                     url = message.split('=>')[1]
-                    Product.objects.create(product_url=url, product_parent=jobArg)
+                    
                     client_socket.send(f'get_product_info=>{url}'.encode('utf-8'))
 
                 if 'give_me_product_url' in message:
-                    product = Product.objects.filter(product_parent=jobArg, product_price='').first()
-                    if product:
-                        client_socket.send(f"product_url=>{product.product_url}".encode('utf-8'))
 
                 if 'product_info=>' in message:
                     msg = message.split('=>')
@@ -78,3 +127,5 @@ def start_client():
 
 if __name__ == "__main__":
     start_client()
+
+'''
