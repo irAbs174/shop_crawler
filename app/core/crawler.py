@@ -40,17 +40,20 @@ def perform_crawl():
                 SiteMap.objects.create(target=jobArg, siteMapUrl=i)
                 print(f'site map {i} saved to db')
             
-            products_list = get_products_list(product_sitemaps)
+            products_list = get_products_list(product_sitemap)
+
+            product_urls = []
             for i in products_list:
                 Product.objects.create(product_url=i, product_parent=jobArg)
+                product_urls.append(i)
                 print(f'product url: {i} saved to db')
 
-            for i in range(len(Product.objects.all().filter(product_parent=jobArg))):
-                info = get_product_info(i.product_url)
+            for i in product_urls:
+                info = get_product_info(i)
                 Product.objects.all().filter(product_parent=jobArg).update(
                     product_name=info['name'],
                     product_price=info['price'],
-                    product_stock=info['stock'],
+                    product_stock=info['status'],
                     product_url=jobArg,
                 )
                 print(f'save product detail {info}')
@@ -64,11 +67,6 @@ def start_server():
         print(f"Serving on port 8080")
         perform_crawl()
         httpd.serve_forever()
-
-# Start the job in a separate thread
-job_thread = threading.Thread(target=perform_crawl)
-job_thread.daemon = True 
-job_thread.start()
 
 start_server()
 
