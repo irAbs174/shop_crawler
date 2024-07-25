@@ -13,7 +13,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
 from func import *
-from products.models import SiteMap, Product
+from products.models import SiteMap, Product, UsProduct
 from target.models import TargetModel
 from jobs.models import JobsModel
 from logs.models import LogModel
@@ -63,39 +63,38 @@ def perform_crawl():
             LogModel.objects.create(
                 logName = f"{jobArg} => crawl-camplated",
                 logType="notification",
-                scanedProducts = f'{len(product.objects.filter(product_parent=jobArg))}',
+                scanedProducts = f'{len(Product.objects.filter(product_parent=jobArg))}',
             )
 
             JobsModel.objects.all().first().delete()
 
 def comparison():
-    our_product_name = input('enter our_product_name: \n')
-    our_product_price = input('enter our_product_price: \n')
+    us_dic = UsProduct.objects.all()
     main_dic = Product.objects.all()
-    for i in main_dic:
-        if i.product_name.find(our_product_name):
-            print(f'product : {our_product_name} found !')
-            if int(our_product_price) < int(i.product_price):
+    for i, j in main_dic, us_dic:
+        if i.product_name.find(j.us_product_name):
+            print(f'product : {j.us_product_name} found !')
+            if int(j.us_product_price) < int(i.product_price):
                 print(f'PRODUCT DOWN !! => {our_product_name} < {i.product_name}')
                 LogModel.objects.create(
                     logName="down",
-                    logType= f'{our_product_name}<{i.product_name}',
+                    logType= f'{j.us_product_name}<{i.product_name}',
                 )
                 Product.objects.filter(product_name=i.product_name).update(
                     product_status="down",
                 )
-            elif int(our_product_price) == int(i.price):
-                print(f'equals price => {our_product_price} = {i.price}')
+            elif int(j.us_product_price) == int(i.price):
+                print(f'equals price => {j.us_product_price} = {i.price}')
                 Product.objects.filter(product_name=i.product_name).update(
                     product_status="equals",
                 )
             else:
-                print(f'{our_product_price} normal price')
+                print(f'{j.us_product_name} normal price')
                 Product.objects.filter(product_name=i.product_name).update(
                     product_status="up",
                 )
         else:
-            print(f'product not exist! => {our_product_name} <=')
+            print(f'product not exist! => {j.us_product_name} <=')
 
 # Start the HTTP server
 def start_server():
