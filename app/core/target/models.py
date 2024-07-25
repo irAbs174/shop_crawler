@@ -12,3 +12,7 @@ class TargetModel(models.Model):
     class Meta:
         verbose_name = 'هدف'
         verbose_name_plural = 'اهداف'
+
+    
+    def __str__(self):
+        return f'{self.targetName}'

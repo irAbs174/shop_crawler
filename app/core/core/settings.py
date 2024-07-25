@@ -12,6 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 INSTALLED_APPS = [
     'target',
     'products',
+    'logs',
+    'jobs',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
