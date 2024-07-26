@@ -11,12 +11,14 @@ import os
 SYS_PATH = '/home/arashsorosh175/shop_crawler/app/core'
 DJANGO_SETTINGS_MODULE = "core.settings"
 SERVER_PORT = 8080
-SLEEP_DURATION = 1200  # 20 minutes
+SLEEP_DURATION = 3600  # 60 minutes
 
 # Django setup
 sys.path.append(SYS_PATH)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS_MODULE)
 django.setup()
+
+from fake_useragent import UserAgent
 
 # Import models and functions
 from func import *
@@ -37,21 +39,23 @@ def log_error(message):
     """Log errors to the database."""
     LogModel.objects.create(logName='error', logType="error", errorMessage=message)
 
-def handle_job(job):
+def handle_job(job, ua):
     """Process a single job."""
     jobName = job.jobName
-    jobArg = job.jobArg
+    #jobArg = job.jobArg
+    jobArg = 'https://123kif.com'
+    headers = {'User-Agent': ua.random}
     if jobName == 'crawl':
         Product.objects.filter(product_parent=jobArg).delete()
         SiteMap.objects.all().delete()
 
-        sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml')
+        sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml', headers=headers)
         product_sitemap = get_products_sitemap(sitemap_soup)
         for i in product_sitemap:
             SiteMap.objects.create(target=jobArg, siteMapUrl=i)
             print(f'site map {i} saved to db')
 
-        products_list = get_products_list(product_sitemap)
+        products_list = get_products_list(product_sitemap, ua)
 
         product_urls = []
         for i in products_list:
@@ -60,7 +64,7 @@ def handle_job(job):
             print(f'product url: {i} saved to db')
 
         for i in product_urls:
-            info = get_product_info(i)
+            info = get_product_info(i, ua)
             Product.objects.filter(product_parent=jobArg, product_url=i).update(
                 product_name=info['name'],
                 product_price=info['price'],
@@ -109,13 +113,15 @@ def perform_comparison():
             print(f'product not exist! => {us_product.us_product_name} <=')
 
 def perform_crawl():
+    ua = UserAgent()
+
     """Perform the crawling job in an infinite loop."""
     while True:
         try:
             LogModel.objects.create(logName='bot_status', logType="online")
             job = JobsModel.objects.first()
             if job:
-                handle_job(job)
+                handle_job(job, ua)
             time.sleep(SLEEP_DURATION)
         except Exception as e:
             print(e)

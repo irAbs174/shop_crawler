@@ -6,6 +6,8 @@ ____________________________________________________________________________
     sockets,
     requests,
     aiohttp,
+    kavenegar,
+    fake-useragent
 ____________________________________________________________________________
 # HOW USE DJANGO OUT SIDE DJANGO ?!
 import django
