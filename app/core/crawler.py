@@ -7,11 +7,18 @@ import django
 import sys
 import os
 
-sys.path.append('/home/arashsorosh175/shop_crawler/app/core')
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
+# Constants
+SYS_PATH = '/home/arashsorosh175/shop_crawler/app/core'
+DJANGO_SETTINGS_MODULE = "core.settings"
+SERVER_PORT = 8080
+SLEEP_DURATION = 1200  # 20 minutes
 
+# Django setup
+sys.path.append(SYS_PATH)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS_MODULE)
 django.setup()
 
+# Import models and functions
 from func import *
 from products.models import SiteMap, Product, UsProduct
 from target.models import TargetModel
@@ -23,84 +30,106 @@ class GetHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(b"Hello, world!")
         return
 
+def log_error(message):
+    """Log errors to the database."""
+    LogModel.objects.create(logName='error', logType="error", errorMessage=message)
 
-def perform_crawl():
-    while True:
-        print("Performing scheduled crawler...")
-        job = JobsModel.objects.first()
-        jobName = job.jobName
-        jobArg = job.jobArg
-        if jobName == 'crawl':
-            Product.objects.filter(product_parent=jobArg).delete()
-            SiteMap.objects.all().delete()
+def handle_job(job):
+    """Process a single job."""
+    jobName = job.jobName
+    jobArg = job.jobArg
+    if jobName == 'crawl':
+        Product.objects.filter(product_parent=jobArg).delete()
+        SiteMap.objects.all().delete()
 
-            sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml')
-            product_sitemap = get_products_sitemap(sitemap_soup)
-            for i in product_sitemap:
-                SiteMap.objects.create(target=jobArg, siteMapUrl=i)
-                print(f'site map {i} saved to db')
-            
-            products_list = get_products_list(product_sitemap)
+        sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml')
+        product_sitemap = get_products_sitemap(sitemap_soup)
+        for i in product_sitemap:
+            SiteMap.objects.create(target=jobArg, siteMapUrl=i)
+            print(f'site map {i} saved to db')
 
-            product_urls = []
-            for i in products_list:
-                Product.objects.create(product_url=i, product_parent=jobArg)
-                product_urls.append(i)
-                print(f'product url: {i} saved to db')
+        products_list = get_products_list(product_sitemap)
 
-            for i in product_urls:
-                info = get_product_info(i)
-                Product.objects.all().filter(product_parent=jobArg, product_url=i).update(
-                    product_name=info['name'],
-                    product_price=info['price'],
-                    product_stock=info['status'],
-                )
-                print(f'save product detail {info}')
+        product_urls = []
+        for i in products_list:
+            Product.objects.create(product_url=i, product_parent=jobArg)
+            product_urls.append(i)
+            print(f'product url: {i} saved to db')
 
-            LogModel.objects.create(
-                logName = f"{jobArg} => crawl-camplated",
-                logType="notification",
-                scanedProducts = f'{len(Product.objects.filter(product_parent=jobArg))}',
+        for i in product_urls:
+            info = get_product_info(i)
+            Product.objects.filter(product_parent=jobArg, product_url=i).update(
+                product_name=info['name'],
+                product_price=info['price'],
+                product_stock=info['status'],
             )
+            print(f'save product detail {info}')
 
-            JobsModel.objects.all().first().delete()
+        LogModel.objects.create(
+            logName=f"{jobArg} => crawl-completed",
+            logType="notification",
+            scanedProducts=f'{len(Product.objects.filter(product_parent=jobArg))}',
+        )
 
-def comparison():
+        perform_comparison()
+        
+        job.delete()
+        LogModel.objects.filter(logName='bot_status').update(logType="offline")
+
+def perform_comparison():
+    """Compare product prices between main and US products."""
     us_dic = UsProduct.objects.all()
     main_dic = Product.objects.all()
-    for i, j in main_dic, us_dic:
-        if i.product_name.find(j.us_product_name):
-            print(f'product : {j.us_product_name} found !')
-            if int(j.us_product_price) < int(i.product_price):
-                print(f'PRODUCT DOWN !! => {our_product_name} < {i.product_name}')
+    for main_product, us_product in zip(main_dic, us_dic):
+        if main_product.product_name.find(us_product.us_product_name) != -1:
+            print(f'product : {us_product.us_product_name} found !')
+            if int(us_product.us_product_price) < int(main_product.product_price):
+                print(f'PRODUCT DOWN !! => {us_product.us_product_name} < {main_product.product_name}')
                 LogModel.objects.create(
                     logName="down",
-                    logType= f'{j.us_product_name}<{i.product_name}',
+                    logType=f'{us_product.us_product_name}<{main_product.product_name}',
                 )
-                Product.objects.filter(product_name=i.product_name).update(
+                Product.objects.filter(product_name=main_product.product_name).update(
                     product_status="down",
                 )
-            elif int(j.us_product_price) == int(i.price):
-                print(f'equals price => {j.us_product_price} = {i.price}')
-                Product.objects.filter(product_name=i.product_name).update(
+            elif int(us_product.us_product_price) == int(main_product.product_price):
+                print(f'equals price => {us_product.us_product_price} = {main_product.product_price}')
+                Product.objects.filter(product_name=main_product.product_name).update(
                     product_status="equals",
                 )
             else:
-                print(f'{j.us_product_name} normal price')
-                Product.objects.filter(product_name=i.product_name).update(
+                print(f'{us_product.us_product_name} normal price')
+                Product.objects.filter(product_name=main_product.product_name).update(
                     product_status="up",
                 )
         else:
-            print(f'product not exist! => {j.us_product_name} <=')
+            print(f'product not exist! => {us_product.us_product_name} <=')
 
-# Start the HTTP server
+def perform_crawl():
+    """Perform the crawling job in an infinite loop."""
+    while True:
+        try:
+            LogModel.objects.create(logName='bot_status', logType="online")
+            job = JobsModel.objects.first()
+            if job:
+                handle_job(job)
+            time.sleep(SLEEP_DURATION)
+        except Exception as e:
+            print(e)
+            log_error(str(e))
+
 def start_server():
-    with socketserver.TCPServer(("", 8080), GetHandler) as httpd:
-        print(f"Serving on port 8080")
-        perform_crawl()
+    """Start the HTTP server."""
+    with socketserver.TCPServer(("", SERVER_PORT), GetHandler) as httpd:
+        print(f"Serving on port {SERVER_PORT}")
         httpd.serve_forever()
 
-start_server()
+# Run the server in a separate thread
+server_thread = threading.Thread(target=start_server)
+server_thread.daemon = True
+server_thread.start()
+
+# Run the crawl function in the main thread
+perform_crawl()
