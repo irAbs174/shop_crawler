@@ -42,8 +42,7 @@ def log_error(message):
 def handle_job(job, ua):
     """Process a single job."""
     jobName = job.jobName
-    #jobArg = job.jobArg
-    jobArg = 'https://123kif.com'
+    jobArg = job.jobArg
     headers = {'User-Agent': ua.random}
     if jobName == 'crawl':
         Product.objects.filter(product_parent=jobArg).delete()
