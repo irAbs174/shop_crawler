@@ -76,6 +76,7 @@ def handle_job(job):
         perform_comparison()
         
         job.delete()
+        Product.objects.filter(jobArg)
         LogModel.objects.filter(logName='bot_status').update(logType="offline")
 
 def perform_comparison():
@@ -83,7 +84,7 @@ def perform_comparison():
     us_dic = UsProduct.objects.all()
     main_dic = Product.objects.all()
     for main_product, us_product in zip(main_dic, us_dic):
-        if main_product.product_name.find(us_product.us_product_name) != -1:
+        if main_product.product_name.find(us_product.us_product_name):
             print(f'product : {us_product.us_product_name} found !')
             if int(us_product.us_product_price) < int(main_product.product_price):
                 print(f'PRODUCT DOWN !! => {us_product.us_product_name} < {main_product.product_name}')
