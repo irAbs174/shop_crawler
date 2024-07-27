@@ -41,25 +41,9 @@ export class AppComponent implements OnInit {
   }
 
   sendPhoneNumber() {
+    //this.VerificationDigits = true;
     this.loadingService.simulateLoading();
-    const formattedPhoneNumbers = this.formatPhoneNumber(this.phoneNumber);
-    this.phoneNumberService.sendPhoneNumbers(formattedPhoneNumbers)
-      .then(() => {
-        console.log('Phone numbers sent successfully');
-        this.VerificationDigits = true;
-      })
-      .catch((error) => {
-        console.error('Error sending phone numbers:', error);
-      });
-  }
 
-  formatPhoneNumber(phoneNumber: string): string[] {
-    // Example formatting - adjust as needed
-    const format1 = phoneNumber; // Original format
-    const format2 = phoneNumber.startsWith('0') ? `+98${phoneNumber.slice(1)}` : phoneNumber; // International format with +98
-    const format3 = phoneNumber.replace(/(\d{4})(\d{3})(\d{4})/, '$1-$2-$3'); // Dashed format
-
-    return [format1, format2, format3];
   }
 
   digits_set(index: number, event: any) {
@@ -81,17 +65,7 @@ export class AppComponent implements OnInit {
   }
 
   verifyCode(code: string[]) {
-    axios.post('https://google.com/verify', { code })
-      .then(response => {
-        console.log('Verification code sent successfully!');
-      })
-      .catch(error => {
-        console.error('Error sending verification code:', error);
-        this.loadingService.simulateLoading();
-        this.enterNumber = false;
-        this.VerificationDigits = false;
-        this.loadComponent(HomeComponent)
-      });
+    alert('wait')
   }
 
   moveToNext(index: number, value: string) {

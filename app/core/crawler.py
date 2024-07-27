@@ -79,7 +79,6 @@ def handle_job(job, ua):
 
         perform_comparison()
         
-        job.delete()
         LogModel.objects.filter(logName='bot_status').update(logType="offline")
 
 def perform_comparison():
