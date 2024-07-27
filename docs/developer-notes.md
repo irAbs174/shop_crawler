@@ -7,7 +7,9 @@ ____________________________________________________________________________
     requests,
     aiohttp,
     kavenegar,
-    fake-useragent
+    fake-useragent,
+    aiogram,
+    openpyxl
 ____________________________________________________________________________
 # HOW USE DJANGO OUT SIDE DJANGO ?!
 import django

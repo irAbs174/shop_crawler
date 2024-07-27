@@ -26,12 +26,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -103,7 +103,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Allow all origins (not recommended for production)
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Alternatively, specify allowed origins
-CORS_ALLOWED_ORIGINS = [
-  "http://localhost:4200",
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+
+# STATIC FILES DIRS
+STATICFILES_DIRS = ['static']
+
+# Manifest Static Files Storage is recommended in production, to prevent outdated
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+# static root Dir configuration 
+STATIC_ROOT = '/var/www/public/kikpick/static'
+
+# STATIC URL
+STATIC_URL = '/static/'
+
+# Media root Dir configuration
+MEDIA_ROOT = 'media'
+
+MEDIA_URL = '/media/'

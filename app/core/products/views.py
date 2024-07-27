@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from logs.models import LogModel
 from target.models import TargetModel
@@ -12,6 +13,9 @@ from core.sec import kavenegar_api_key
 from kavenegar import *
 import random
 import json
+
+def index(request):
+    return render(request, 'base.html')
 
 @csrf_exempt
 def get_down_products_price_api(request):
@@ -58,6 +62,7 @@ def get_normal_products_price_api(request):
 @csrf_exempt
 def get_products_api(request):
     products = P.objects.all()
+    count = products.count()
     content = []
     for i in products:
         content.append({
@@ -66,8 +71,9 @@ def get_products_api(request):
             'stock': i.product_stock,
             'url': i.product_url,
             'parent': i.product_parent,
+            'status': i.product_status,
         })
-    return JsonResponse({'status': content, 'success': True})
+    return JsonResponse({'status': content,'count':count,'success': True})
 
 @csrf_exempt
 def add_us_products_api(request):
@@ -113,13 +119,11 @@ def add_jobs_api(request):
 
 @csrf_exempt
 def get_logs_api(request):
-    logs = LogModel.objects.all()
-    content = []
-    for i in logs:
-        content.append({
-            'name': i.logName,
-            'price': i.logType
-        })
+    logs = LogModel.objects.all().last()
+    content = {
+        'name': logs.logName,
+        'logType': logs.logType
+    }
     return JsonResponse({'status': content, 'success': True})
 
 @csrf_exempt
