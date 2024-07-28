@@ -12,6 +12,7 @@ from .views import (
     get_normal_products_price_api,
     add_us_products_api,
     add_jobs_api,
+    perform_comparison
 )
 
 urlpatterns = [
@@ -27,4 +28,5 @@ urlpatterns = [
     path('get_normal_products_price_api', get_normal_products_price_api),
     path('add_us_products_api', add_us_products_api),
     path('add_jobs_api', add_jobs_api),
+    path('perform_comparison', perform_comparison)
 ]

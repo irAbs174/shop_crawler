@@ -2,10 +2,22 @@ import http.server
 import socketserver
 import threading
 import time
-
-from dbConf import *
-
 from fake_useragent import UserAgent
+
+import django
+import sys
+import os
+
+# Constants
+SYS_PATH = '/home/arashsorosh175/shop_crawler/app/core'
+DJANGO_SETTINGS_MODULE = "core.settings"
+SERVER_PORT = 8090
+SLEEP_DURATION = 7200  # 120 minutes
+
+# Django setup
+sys.path.append(SYS_PATH)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS_MODULE)
+django.setup()
 
 # Import models and functions
 from func import *
@@ -32,8 +44,6 @@ def handle_job(job, ua):
     jobArg = job.jobArg
     headers = {'User-Agent': ua.random}
     if jobName == 'crawl':
-        Product.objects.filter(product_parent=jobArg).delete()
-        SiteMap.objects.all().delete()
 
         sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml', headers=headers)
         product_sitemap = get_products_sitemap(sitemap_soup)
@@ -108,6 +118,8 @@ def perform_crawl():
             if job:
                 handle_job(job, ua)
             time.sleep(SLEEP_DURATION)
+            Product.objects.filter(product_parent=jobArg).delete()
+            SiteMap.objects.all().delete()
         except Exception as e:
             print(e)
             log_error(str(e))

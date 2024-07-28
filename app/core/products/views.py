@@ -14,8 +14,63 @@ from kavenegar import *
 import random
 import json
 
-def index(request):
-    return render(request, 'base.html')
+@csrf_exempt
+def perform_comparison(request):
+    """Compare product prices between main and US products."""
+    us_dic = UsProduct.objects.all()
+    main_dic = P.objects.all()
+    
+    comparison_results = []
+    
+    try:
+        for main_product, us_product in zip(main_dic, us_dic):
+            if main_product.product_name.find(us_product.us_product_name):
+                print(f'Product : {us_product.us_product_name} found!')
+                if int(us_product.us_product_price) < int(main_product.product_price):
+                    LogModel.objects.create(
+                        logName="down",
+                        logType=f'{us_product.us_product_name}<{main_product.product_name}',
+                    )
+                    P.objects.filter(product_name=main_product.product_name).update(
+                        product_status="down",
+                    )
+                    comparison_results.append({
+                        'status': 'down',
+                        'context': f'کالای {us_product.us_product_name} توسط بای کیف و با قیمت {main_product.product_price} زیر شده',
+                        'success': True
+                    })
+                elif int(us_product.us_product_price) == int(main_product.product_price):
+                    P.objects.filter(product_name=main_product.product_name).update(
+                        product_status="equals",
+                    )
+                    comparison_results.append({
+                        'status': 'equals',
+                        'context': f'کالای {us_product.us_product_name} با کالای {main_product.product_name} برابر است در سایت {main_product.product_parent}',
+                        'success': True
+                    })
+                else:
+                    print(f'{us_product.us_product_name} normal price')
+                    P.objects.filter(product_name=main_product.product_name).update(
+                        product_status="up",
+                    )
+                    comparison_results.append({
+                        'status': 'normal',
+                        'success': True
+                    })
+            else:
+                comparison_results.append({
+                    'status': 'not exist!',
+                    'success': False
+                })
+        
+        if not comparison_results:
+            # This handles the case where no products were compared
+            return JsonResponse({'status': 'no products compared', 'success': False})
+        
+        return JsonResponse({'results': comparison_results, 'success': True})
+
+    except Exception as e:
+        return JsonResponse({'status': str(e), 'success': False})
 
 @csrf_exempt
 def get_down_products_price_api(request):
@@ -119,12 +174,18 @@ def add_jobs_api(request):
 
 @csrf_exempt
 def get_logs_api(request):
-    logs = LogModel.objects.all().last()
-    content = {
-        'name': logs.logName,
-        'logType': logs.logType
-    }
-    return JsonResponse({'status': content, 'success': True})
+    logsM = LogModel.objects.all()[:10]
+    logs = []
+    for i in logsM:
+        content = {
+            'name': i.logName,
+            'logType': i.logType
+        }
+        logs.append(content)
+    
+    response_data = {'status': logs, 'success': True}
+    print(json.dumps(response_data))  # Add print statement for debugging
+    return JsonResponse(response_data)
 
 @csrf_exempt
 def get_target_api(request):

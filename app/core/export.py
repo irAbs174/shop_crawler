@@ -39,5 +39,5 @@ def export_products():
             ws.append(row)
         
         # Save the Workbook to a file
-        file_path = 'media/products.xlsx'
+        file_path = 'products.xlsx'
         wb.save(file_path)

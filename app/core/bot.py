@@ -7,7 +7,11 @@ from aiogram import Bot, Dispatcher, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-
+from aiogram.types import FSInputFile
+from export import export_products
+from aiohttp import ClientSession
+from openpyxl import Workbook
+from html import escape
 from aiogram.types import (
     Message,
     InlineKeyboardMarkup,
@@ -15,7 +19,6 @@ from aiogram.types import (
     CallbackQuery
 )
 import os
-from export import export_products
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = "7475255594:AAHW5qXvU9h9LaOHfaZgSRH5618ZhPBLuQQ"
@@ -36,7 +39,7 @@ async def callback_query_handler(callback_query: CallbackQuery) -> None:
     elif callback_query.data == "option2":
         await callback_query.message.answer("/logs")
     elif callback_query.data == "option3":
-        await callback_query.message.answer("کار ها")
+        await callback_query.message.answer("/jobs")
     elif callback_query.data == "option4":
         await callback_query.message.answer("/start")
 
@@ -86,21 +89,57 @@ async def echo_handler(message: Message) -> None:
 
         if message.text == '/getProducts':
             progress_message = await message.answer("در حال تولید فایل Excel، لطفاً صبر کنید...")
-            # Run the export process
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, export_products)
-            with open('media/products.xlsx', 'rb') as file:
-                await bot.send_document(chat_id=message.chat.id, document=file, caption="لیست محصولات")
-        # Send a custom message
+            async with ClientSession() as session:
+                async with session.post('http://0.0.0.0:8080/api/get_products_api') as response:
+                    data = await response.json()
+                    count = data['count']
+                    await message.answer(f"تعداد محصولات : {count} ")
+                    products_data = [[
+                        'فروشگاه',
+                        'نام کالا',
+                        'قیمت کالا',
+                        'وضعیت',
+                        'موجودی',
+                        'صفحه محصول',
+                    ]]
+                    for i in data['status']:
+                        print(data['status'])
+                        stock = 'ناموجود' if i['price'] == '0' or i['stock'] == 'ناموجود' else 'موجود'
+                        products_data.append([
+                            i['parent'],
+                            i['name'],
+                            i['price'],
+                            i['status'],
+                            stock,
+                            i['url'],
+                        ])
 
-            await progress_message.edit_text("فایل Excel ایجاد شد.")
+                    # Create an Excel workbook and add the data
+                    wb = Workbook()
+                    ws = wb.active
+                    for row in products_data:
+                        print(row)
+                        ws.append(row)
+                    
+                    file_path = 'products.xlsx'
+                    wb.save(file_path)
+                    file = FSInputFile('products.xlsx')
+                    await bot.send_document(chat_id=message.chat.id, document=file, caption="لیست محصولات")
+                    
+                    await progress_message.edit_text("فایل Excel ایجاد شد.")
         elif message.text == '/logs':
-            response = requests.post('http://0.0.0.0:8080/api/get_logs_api', {}).json()
-            msg = f''' آخرین گزارش:
-            {response['status']['name']},
-            {response['status']['logType']}
-             '''
-            await bot.send_message(chat_id=message.chat.id, text=msg)
+            async with ClientSession() as session:
+                async with session.post('http://0.0.0.0:8080/api/get_logs_api') as response:
+                    logs = await response.json()
+                    if logs['success']:
+                        msg = "آخرین گزارشات:\n"
+                        for log in logs['status']:
+                            msg += f"{escape(log['name'])}: {escape(log['logType'])}\n"
+                        await bot.send_message(message.chat.id, msg)
+                    else:
+                        await bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
+        else:
+            await bot.send_message(chat_id=message.chat.id, text=f"{escape(message.text)}")
         await bot.send_message(chat_id=message.chat.id, text=f"{message.text}")
     except TypeError:
         # But not all the types is supported to be copied so need to handle it
@@ -109,8 +148,15 @@ async def echo_handler(message: Message) -> None:
 async def print_love_periodically():
     while True:
         print("Bot start to comparison !!!")
-        await asyncio.sleep(5)
-
+        response = requests.post('http://0.0.0.0:8080/api/perform_comparison', {}).json()
+        for i in response['results']:
+            context = i['context']
+            if i['status'] == 'down':
+                await bot.send_message(chat_id=5507021431, text=context)
+            else:
+            #7475255594
+                print(response)
+        
 async def main() -> None:
     # Start the periodic task
     asyncio.create_task(print_love_periodically())
