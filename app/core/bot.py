@@ -34,23 +34,45 @@ dp = Dispatcher()
 @dp.callback_query()
 async def callback_query_handler(callback_query: CallbackQuery) -> None:
     if callback_query.data == "option1":
-        await callback_query.message.answer("/getProducts")
+        msg = '''
+        لیست دستورات ربات :
+        1. افزودن کالای تحت نظر
+        2. گزارش
+        3. خروجی محصولات
+        4. محصولات زیر شده
+        5. محصولات هم قیمت
+        6. کار جاری
+        7. مشاهده محصولات تحت نظر 
+        '''
+        await callback_query.message.answer(msg)
 
     elif callback_query.data == "option2":
-        await callback_query.message.answer("/logs")
+        await callback_query.message.answer("تایپ کنید: گزارش")
     elif callback_query.data == "option3":
-        await callback_query.message.answer("/jobs")
+        await callback_query.message.answer("تایپ کنید: کار جاری")
     elif callback_query.data == "option4":
-        await callback_query.message.answer("/start")
+        await callback_query.message.answer("تایپ کنید: راهنما")
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
+    user = {
+        'userId': message.chat.id,
+        'username': message.fromuser.username,
+        'first_name': message.fromuser.first_name,
+        'last_name': message.fromuser.last_name,
+    }
+    res = requests.post('http://0.0.0.0:8080/api/register').json()
+
+    print(res['status'])
+    
     USERSNAMES = [
         'Unique174',
         'fghani41',
         '@maryamghzh',
         'alireezwwee',
         '@saeed1321',
+        'EhsanPishyar',
+        'Khakia2424'
     ]
 
     username = message.from_user.username
@@ -65,9 +87,7 @@ async def command_start_handler(message: Message) -> None:
         
         # Create an inline keyboard with buttons
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="محصولات", callback_data="option1")],
-            [InlineKeyboardButton(text="گزارشات", callback_data="option2")],
-            [InlineKeyboardButton(text="مشاهده کار جاری", callback_data="option3")],
+            [InlineKeyboardButton(text="لیست دستورات", callback_data="option1")],
             [InlineKeyboardButton(text="راهنمای ربات", callback_data="option4")]
         ])
     else:
@@ -87,47 +107,12 @@ async def echo_handler(message: Message) -> None:
         print(f'=> {message.chat}')
         print(f'User sent: {message.text}')
 
-        if message.text == '/getProducts':
+        if message.text == 'خروجی':
             progress_message = await message.answer("در حال تولید فایل Excel، لطفاً صبر کنید...")
             async with ClientSession() as session:
-                async with session.post('http://0.0.0.0:8080/api/get_products_api') as response:
-                    data = await response.json()
-                    count = data['count']
-                    await message.answer(f"تعداد محصولات : {count} ")
-                    products_data = [[
-                        'فروشگاه',
-                        'نام کالا',
-                        'قیمت کالا',
-                        'وضعیت',
-                        'موجودی',
-                        'صفحه محصول',
-                    ]]
-                    for i in data['status']:
-                        print(data['status'])
-                        stock = 'ناموجود' if i['price'] == '0' or i['stock'] == 'ناموجود' else 'موجود'
-                        products_data.append([
-                            i['parent'],
-                            i['name'],
-                            i['price'],
-                            i['status'],
-                            stock,
-                            i['url'],
-                        ])
-
-                    # Create an Excel workbook and add the data
-                    wb = Workbook()
-                    ws = wb.active
-                    for row in products_data:
-                        print(row)
-                        ws.append(row)
-                    
-                    file_path = 'products.xlsx'
-                    wb.save(file_path)
-                    file = FSInputFile('products.xlsx')
-                    await bot.send_document(chat_id=message.chat.id, document=file, caption="لیست محصولات")
-                    
-                    await progress_message.edit_text("فایل Excel ایجاد شد.")
-        elif message.text == '/logs':
+                file = FSInputFile('products.xlsx')
+                await bot.send_document(chat_id=message.chat.id, document=file, caption="لیست محصولات")
+        elif message.text == 'گزارش':
             async with ClientSession() as session:
                 async with session.post('http://0.0.0.0:8080/api/get_logs_api') as response:
                     logs = await response.json()
@@ -138,31 +123,81 @@ async def echo_handler(message: Message) -> None:
                         await bot.send_message(message.chat.id, msg)
                     else:
                         await bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
-        else:
-            await bot.send_message(chat_id=message.chat.id, text=f"{escape(message.text)}")
-        await bot.send_message(chat_id=message.chat.id, text=f"{message.text}")
+        elif message.text == 'افزودن کالای تحت نظر':
+            msg = '''
+            فرمت اصلی :‌افزودن:کالا:قیمت
+            برای افزودن کالای هدف مطابق نمونه عمل کنید :
+            افزودن:fclt10:250000
+            '''
+            progress_message = await message.answer(msg)
+        elif 'افزودن:' in message.text:
+            name = message.text.split(':')[1]
+            price = message.text.split(':')[2]
+            print(name, price)
+            context = {'name': name, 'price': price}
+            response = requests.post('http://0.0.0.0:8080/api/add_us_products_api', context).json()
+            msg = f'''
+            کالای {name} با قیمت {price} تحت نظر قرار گرفت
+            '''
+            progress_message = await message.answer(msg)
+        elif 'محصولات زیر شده' in message.text:
+            res = requests.post('http://0.0.0.0:8080/api/get_down_products_price_api', {}).json()
+            context = []
+            for i in res['status']:
+                name = i['name']
+                price = i['price']
+                stock = i['stock']
+                url = i['url']
+                parent = i['parent']
+
+                msg = f'''
+                نام محصول : {name}
+                قیمت : {price}
+                وضعیت موجودی : {stock}
+                آدرس صفحه محصول : {url}
+                فروشگاه : {parent}
+                '''
+                await message.answer(msg)
+        elif 'محصولات هم قیمت' in message.text:
+            res = requests.post('http://0.0.0.0:8080/api/get_equals_products_price_api', {}).json()
+            context = []
+            for i in res['status']:
+                name = i['name']
+                price = i['price']
+                stock = i['stock']
+                url = i['url']
+                parent = i['parent']
+
+                msg = f'''
+                نام محصول : {name}
+                قیمت : {price}
+                وضعیت موجودی : {stock}
+                آدرس صفحه محصول : {url}
+                فروشگاه : {parent}
+                '''
+                await message.answer(msg)
+        elif 'مشاهده محصولات تحت نظر' in message.text:
+            res = requests.post('http://0.0.0.0:8080/api/get_us_products_api', {}).json()
+            context = []
+            for i in res['status']:
+                name = i['name']
+                price = i['price']
+                msg = f'''
+                نام محصول : {name}
+                قیمت : {price}
+                '''
+                await message.answer(msg)
     except TypeError:
         # But not all the types is supported to be copied so need to handle it
         await message.answer("Nice try!")
-
-async def print_love_periodically():
-    while True:
-        print("Bot start to comparison !!!")
-        response = requests.post('http://0.0.0.0:8080/api/perform_comparison', {}).json()
-        for i in response['results']:
-            context = i['context']
-            if i['status'] == 'down':
-                await bot.send_message(chat_id=5507021431, text=context)
-            else:
-            #7475255594
-                print(response)
         
 async def main() -> None:
-    # Start the periodic task
-    asyncio.create_task(print_love_periodically())
     # And the run events dispatching
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
+    for i in range(600):
+        print(f"=> BOT ON SLEEP FOR ({i}) secend ...")
+        time.sleep(1)

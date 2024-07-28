@@ -12,7 +12,7 @@ import os
 SYS_PATH = '/home/arashsorosh175/shop_crawler/app/core'
 DJANGO_SETTINGS_MODULE = "core.settings"
 SERVER_PORT = 8090
-SLEEP_DURATION = 7200  # 120 minutes
+SLEEP_DURATION = 14400  # 240 minutes
 
 # Django setup
 sys.path.append(SYS_PATH)
@@ -117,7 +117,9 @@ def perform_crawl():
             job = JobsModel.objects.first()
             if job:
                 handle_job(job, ua)
-            time.sleep(SLEEP_DURATION)
+            for i in range(SLEEP_DURATION):
+                print(f'BOT SLEEP FOR {i} SEC')
+                time.sleep(1)
             Product.objects.filter(product_parent=jobArg).delete()
             SiteMap.objects.all().delete()
         except Exception as e:

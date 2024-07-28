@@ -12,10 +12,12 @@ from .views import (
     get_normal_products_price_api,
     add_us_products_api,
     add_jobs_api,
-    perform_comparison
+    perform_comparison,
+    register
 )
 
 urlpatterns = [
+    path('register', register),
     path('auth', auth),
     path('auth_send_otp', auth_send_otp),
     path('get_products_api', get_products_api),

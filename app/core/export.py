@@ -1,5 +1,9 @@
 import requests
 from openpyxl import Workbook
+import http.server
+import socketserver
+import threading
+import time
 
 # Create a new Workbook
 wb = Workbook()
@@ -41,3 +45,11 @@ def export_products():
         # Save the Workbook to a file
         file_path = 'products.xlsx'
         wb.save(file_path)
+
+    for i in range(600):
+        time.sleep(1)
+        print(f'=> {i} secend ...')
+
+if __name__ == "__main__":
+    # Start the export_products function in a separate thread
+    export_products()

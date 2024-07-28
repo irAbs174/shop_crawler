@@ -7,7 +7,8 @@ from jobs.models import JobsModel
 from .models import (
     SiteMap,
     Product as P,
-    UsProduct,
+    UsProduct as us,
+    BotUsers,
 )
 from core.sec import kavenegar_api_key
 from kavenegar import *
@@ -15,9 +16,26 @@ import random
 import json
 
 @csrf_exempt
+def register(request):
+    userId = request.POST('userId')
+    username = request.POST('username')
+    first_name = request.POST('first_name')
+    last_name = request.POST('last_name')
+    if BotUsers.objects.filter(userId=userId).exists():
+        content = {'status':'کاربر از قبل موجود است', 'success': True}
+    else:
+        BotUsers.objects.create(
+            userId = userId,
+            username = username,
+            first_name = first_name,
+            last_name = last_name
+        )
+        content = {'status': 'کاربر با موفقیت ثبت شده', 'success': True}
+    return JsonResponse(content)
+@csrf_exempt
 def perform_comparison(request):
     """Compare product prices between main and US products."""
-    us_dic = UsProduct.objects.all()
+    us_dic = us.objects.all()
     main_dic = P.objects.all()
     
     comparison_results = []
@@ -132,9 +150,11 @@ def get_products_api(request):
 
 @csrf_exempt
 def add_us_products_api(request):
+    print(request.POST)
     name = request.POST.get('name')
     price = request.POST.get('price')
-    p.objects.create(
+    print(name, price)
+    us.objects.create(
         us_product_name = name,
         us_product_price = price,
     )
@@ -142,7 +162,7 @@ def add_us_products_api(request):
 
 @csrf_exempt
 def get_us_products_api(request):
-    us_products = UsProduct.objects.all()
+    us_products = us.objects.all()
     content = []
     for i in us_products:
         content.append({
