@@ -43,7 +43,7 @@ def export_products():
             ws.append(row)
         
         # Save the Workbook to a file
-        file_path = 'products.xlsx'
+        file_path = 'products1.xlsx'
         wb.save(file_path)
 
     for i in range(600):
