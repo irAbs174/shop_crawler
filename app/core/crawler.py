@@ -3,7 +3,7 @@ import socketserver
 import threading
 import time
 from fake_useragent import UserAgent
-
+import requests
 import django
 import sys
 import os
@@ -36,16 +36,18 @@ class GetHandler(http.server.SimpleHTTPRequestHandler):
 
 def log_error(message):
     """Log errors to the database."""
-    LogModel.objects.create(logName='error', logType="error", errorMessage=message)
+    LogModel.objects.create(logName='error', logType="error")
 
 def handle_job(job, ua):
-    """Process a single job."""
-    jobName = job.jobName
-    jobArg = job.jobArg
-    headers = {'User-Agent': ua.random}
-    if jobName == 'crawl':
-
-        sitemap_soup = crawler(f'{jobArg}/sitemap_index.xml', headers=headers)
+    targets = TargetModel.objects.all()
+    for target in targets:
+                
+        """Process a single job."""
+        jobName = target.targetName
+        jobArg = target.targetUrl
+        headers = {'User-Agent': ua.random}
+            
+        sitemap_soup = crawler(f'{jobArg}/{target.target_sitemap}', headers=headers)
         product_sitemap = get_products_sitemap(sitemap_soup)
         for i in product_sitemap:
             SiteMap.objects.create(target=jobArg, siteMapUrl=i)
@@ -84,16 +86,14 @@ def perform_comparison(jobArg):
     ctx = {
         'jobArg': jobArg,
     }
-    response = request.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
+    response = requests.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
     print(response)
-
-def perform_crawl():
-    ua = UserAgent()
 
 def perform_export(jobArg):
     print(f'EXPORT => {jobArg}')
 
-
+def perform_crawl():
+    ua = UserAgent()
     """Perform the crawling job in an infinite loop."""
     while True:
         try:
