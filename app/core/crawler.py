@@ -20,6 +20,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", DJANGO_SETTINGS_MODULE)
 django.setup()
 
 # Import models and functions
+from django.utils import timezone
+
 from func import *
 from products.models import SiteMap, Product, UsProduct
 from target.models import TargetModel
@@ -57,17 +59,21 @@ def handle_job(job, ua):
 
         product_urls = []
         for i in products_list:
-            Product.objects.create(product_url=i, product_parent=jobArg)
-            product_urls.append(i)
-            print(f'product url: {i} saved to db')
-
-        for i in product_urls:
-            info = get_product_info(i, ua)
-            Product.objects.filter(product_parent=jobArg, product_url=i).update(
-                product_name=info['name'],
-                product_price=info['price'],
-                product_stock=info['status'],
-            )
+            today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            if Prodoct.objects.filter(product_url=i, product_parent=jobArg, created_at=today).exist():
+                pass
+            else:
+                Product.objects.create(product_url=i, product_parent=jobArg, product_type=target.targetType)
+                product_urls.append(i)
+                print(f'product url: {i} saved to db')
+        if product_urls:
+            for i in product_urls:  
+                info = get_product_info(i, ua)
+                Product.objects.filter(product_parent=jobArg, product_url=i).update(
+                    product_name=info['name'],
+                    product_price=info['price'],
+                    product_stock=info['status'],
+                )
             print(f'save product detail {info}')
 
         LogModel.objects.create(
