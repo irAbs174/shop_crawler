@@ -37,6 +37,7 @@ class Product(models.Model):
     product_price = models.CharField(max_length=50, verbose_name='قیمت', blank=True, null=True)
     product_url = models.CharField(max_length=50, verbose_name='آدرس محصول',null=True, blank=True )
     product_stock = models.CharField(max_length=50, verbose_name='موجودی محصول',null=True, blank=True )
+    product_type = models.CharField(max_length=50, verbose_name='محصول مرجع',null=True, blank=True )
     product_status = models.CharField(max_length=50, verbose_name='وضعیت محصول',null=True, blank=True )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد', blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی', blank=True, null=True)

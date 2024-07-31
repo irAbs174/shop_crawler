@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from logs.models import LogModel
 from target.models import TargetModel
 from jobs.models import JobsModel
+from django.utils import timezone
 from .models import (
     SiteMap,
     Product as P,
@@ -35,10 +36,9 @@ def register(request):
 
 @csrf_exempt
 def perform_comparison(request):
-    """Compare product prices between main and US products."""
-    us_dic = us.objects.all()
-    main_dic = P.objects.all()
-    
+    jobArg = request.POST.get('jobArg')
+    main_dic = P.objects.filter(product_parent=jobArg)
+    us_dic = P.objects.filter(product_type = 'main')
     comparison_results = []
     
     try:

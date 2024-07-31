@@ -12,7 +12,7 @@ import os
 SYS_PATH = '/home/arashsorosh175/shop_crawler/app/core'
 DJANGO_SETTINGS_MODULE = "core.settings"
 SERVER_PORT = 8090
-SLEEP_DURATION = 14400  # 240 minutes
+SLEEP_DURATION = 10  # 240 minutes
 
 # Django setup
 sys.path.append(SYS_PATH)
@@ -31,7 +31,7 @@ class GetHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(b"Hello, world!")
+        self.wfile.write(b"GET OUT HERE !!")
         return
 
 def log_error(message):
@@ -74,41 +74,25 @@ def handle_job(job, ua):
             scanedProducts=f'{len(Product.objects.filter(product_parent=jobArg))}',
         )
 
-        perform_comparison()
+        perform_comparison(jobArg)
+
+        perform_export(jobArg)
         
         LogModel.objects.filter(logName='bot_status').update(logType="offline")
 
-def perform_comparison():
-    """Compare product prices between main and US products."""
-    us_dic = UsProduct.objects.all()
-    main_dic = Product.objects.all()
-    for main_product, us_product in zip(main_dic, us_dic):
-        if main_product.product_name.find(us_product.us_product_name) != -1:
-            print(f'product : {us_product.us_product_name} found !')
-            if int(us_product.us_product_price) < int(main_product.product_price):
-                print(f'PRODUCT DOWN !! => {us_product.us_product_name} < {main_product.product_name}')
-                LogModel.objects.create(
-                    logName="down",
-                    logType=f'{us_product.us_product_name}<{main_product.product_name}',
-                )
-                Product.objects.filter(product_name=main_product.product_name).update(
-                    product_status="down",
-                )
-            elif int(us_product.us_product_price) == int(main_product.product_price):
-                print(f'equals price => {us_product.us_product_price} = {main_product.product_price}')
-                Product.objects.filter(product_name=main_product.product_name).update(
-                    product_status="equals",
-                )
-            else:
-                print(f'{us_product.us_product_name} normal price')
-                Product.objects.filter(product_name=main_product.product_name).update(
-                    product_status="up",
-                )
-        else:
-            print(f'product not exist! => {us_product.us_product_name} <=')
+def perform_comparison(jobArg):
+    ctx = {
+        'jobArg': jobArg,
+    }
+    response = request.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
+    print(response)
 
 def perform_crawl():
     ua = UserAgent()
+
+def perform_export(jobArg):
+    print(f'EXPORT => {jobArg}')
+
 
     """Perform the crawling job in an infinite loop."""
     while True:
@@ -120,7 +104,6 @@ def perform_crawl():
             for i in range(SLEEP_DURATION):
                 print(f'BOT SLEEP FOR {i} SEC')
                 time.sleep(1)
-            Product.objects.filter(product_parent=jobArg).delete()
             SiteMap.objects.all().delete()
         except Exception as e:
             print(e)
