@@ -59,50 +59,99 @@ def get_products_list(products_sitemap_list, ua):
 
 def get_product_info(product_address, ua):
     try:
-        options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        driver = driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get(product_address)
-        scroll_and_load(driver)
-        btn = driver.find_elements(By.XPATH, "//button[contains(@class, 'single_add_to_cart_button') and @disabled]")
-        driver.close()
-        print(f'btn +>>> {btn}')
-        if btn == []:
-            is_available = False
-        else:
-            is_available = True
+        if '123kif' in product_address:
+            headers = {'User-Agent': ua.random}
+            content_html = crawler(product_address, headers=headers)
+        
+            if content_html is None:
+                return None
 
-        headers = {'User-Agent': ua.random}
-        content_html = crawler(product_address, headers=headers)
-    
-        if content_html is None:
-            return None
+            product_name = content_html.title.text
 
-        product_name = content_html.title.text
-    
-        if is_available:
-            return {
-                'name': product_name,
-                'price': 0,
-                'status': 'ناموجود',
+            stock = content_html.select('p.out-of-stock')
+
+            if stock == []:
+                print("MOJOD")
+                # Extract and convert price
+                price_element = content_html.select('bdi')[1].text
+                print(price_element)
+                persian_number = price_element.split('\xa0')[0]
+                print(persian_number)
+                # Translation table: Persian digits to Arabic numerals
+                translation_table = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
+                print(translation_table)
+                # Convert Persian digits to Arabic numerals
+                arabic_number = persian_number.translate(translation_table)
+                print(arabic_number)
+                # Remove any thousand separators
+                arabic_number = arabic_number.replace(',', '')
+                print(arabic_number)
+                # Convert to integer
+                number = int(arabic_number)
+                
+                return {
+                    'name': product_name,
+                    'price': number,
+                    'status': 'موجود',
                 }
-        else:
-            # Extract and convert price
-            price_element = content_html.find(class_='woocommerce-Price-amount amount')
-            price_text = price_element.text
-            price_digits = re.sub(r'[^\d]', '', price_text)
-            if price_digits.isdigit():
-                price = int(price_digits) * 4
             else:
-                price = '0'  # Price not found or invalid
-            
-            return {
-                'name': product_name,
-                'price': price,
-                'status': 'موجود',
-            }
+                print("NAMOJOD")
+                return {
+                    'name': product_name,
+                    'price': 0,
+                    'status': 'ناموجود',
+                    }
+        elif 'buykif' in product_address:
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            driver = driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver.get(product_address)
+            scroll_and_load(driver)
+            btn = driver.find_elements(By.XPATH, "//button[contains(@class, 'single_add_to_cart_button') and @disabled]")
+            driver.close()
+            print(f'btn +>>> {btn}')
+            if btn == []:
+                is_available = False
+            else:
+                is_available = True
+
+            headers = {'User-Agent': ua.random}
+            content_html = crawler(product_address, headers=headers)
+        
+            if content_html is None:
+                return None
+
+            product_name = content_html.title.text
+            if is_available:
+                return {
+                    'name': product_name,
+                    'price': 0,
+                    'status': 'ناموجود',
+                    }
+            else:
+                # Extract and convert price
+                price_element = content_html.find(class_='woocommerce-Price-amount amount')
+                price_text = price_element.text
+                price_digits = re.sub(r'[^\d]', '', price_text)
+                if price_digits.isdigit():
+                    price = int(price_digits) * 4
+                else:
+                    price = '0'  # Price not found or invalid
+                
+                return {
+                    'name': product_name,
+                    'price': price,
+                    'status': 'موجود',
+                }
+        elif 'snapshop' in product_address:
+            pass
+        elif 'digikala' in product_address:
+            pass
+        else:
+            pass
+    
 
     except Exception as e:
         print(e)

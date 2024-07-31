@@ -6,6 +6,7 @@ from fake_useragent import UserAgent
 import requests
 import django
 import sys
+import csv
 import os
 
 # Constants
@@ -27,6 +28,8 @@ from products.models import SiteMap, Product, UsProduct
 from target.models import TargetModel
 from jobs.models import JobsModel
 from logs.models import LogModel
+
+today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 class GetHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -59,9 +62,10 @@ def handle_job(ua):
         products_list = get_products_list(product_sitemap, ua)
 
         product_urls = []
+
         for i in products_list:
-            today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            if Product.objects.filter(product_url=i, product_parent=jobArg, created_at=today).exists():
+            if Product.objects.filter(product_url=i, product_parent=jobArg).exists():
+                product_urls.append(i)
                 print(f'=>{i} Exist!')
             else:
                 Product.objects.create(product_url=i, product_parent=jobArg, product_type=target.targetType)
@@ -71,7 +75,7 @@ def handle_job(ua):
         if product_urls:
             for i in product_urls:  
                 info = get_product_info(i, ua)
-                if Product.objects.filter(product_url=i, product_parent=jobArg,  product_price=info['price'], created_at=today).exists():
+                if Product.objects.filter(product_url=i, product_parent=jobArg,  product_price=info['price']).exists():
                     print(f'=>{i} Exist!')
                 else:
                     Product.objects.filter(product_parent=jobArg, product_url=i).update(
@@ -91,7 +95,7 @@ def handle_job(ua):
 
         perform_comparison(jobArg)
 
-        perform_export(jobArg)
+        perform_export(jobName, jobArg)
         
         LogModel.objects.filter(logName='bot_status').update(logType="offline")
 
@@ -102,7 +106,39 @@ def perform_comparison(jobArg):
     response = requests.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
     print(response)
 
-def perform_export(jobArg):
+def perform_export(jobName, jobArg):
+    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'وضعیت', 'موجودی', 'آدرس محصول']
+    rows = []
+    response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={})
+    for i in response.json()['status']:
+        if i['price'] == '0':
+            stock = 'ناموجود'
+        elif i['stock'] == 'ناموجود':
+            stock = 'ناموجود'
+        else:
+            stock = 'موجود'
+        rows.append([
+            i['parent'],
+            i['name'],
+            i['price'],
+            i['status'],
+            stock,
+            i['url'],
+        ])
+    # name of csv file
+    filename = f"Products_Export=>{jobName}.csv"
+
+    # writing to csv file
+    with open(filename, 'w') as csvfile:
+        # creating a csv writer object
+        csvwriter = csv.writer(csvfile)
+
+        # writing the fields
+        csvwriter.writerow(fields)
+
+        # writing the data rows
+        csvwriter.writerows(rows)
+
     print(f'EXPORT => {jobArg}')
 
 def perform_crawl():
