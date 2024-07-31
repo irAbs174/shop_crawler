@@ -57,7 +57,7 @@ def main_menu(message):
 @bot.message_handler(func=lambda message: message.text in ['برون بری', 'محصولات','اهداف','گزارشات','مشاهده کار جاری','کاربران ربات','بازگشت'])
 def handle_buttons(message):
     if message.text == 'محصولات':
-        new_buttons = ['محصولات قیمت بالا','محصولات زیر شده', 'محصولات هم قیمت', 'محصولات تحت نظر', 'بازگشت']
+        new_buttons = ['برون بری', 'محصولات قیمت بالا','محصولات زیر شده', 'محصولات هم قیمت', 'محصولات تحت نظر', 'بازگشت']
         new_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
         bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
