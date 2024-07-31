@@ -42,33 +42,33 @@ def perform_comparison(request):
     comparison_results = []
     
     try:
-        for main_product, us_product in zip(main_dic, us_dic):
-            if main_product.product_name.find(us_product.us_product_name):
-                print(f'Product : {us_product.us_product_name} found!')
-                if int(us_product.us_product_price) < int(main_product.product_price):
+        for main_product, us_dic in zip(main_dic, us_dic):
+            if main_product.product_name.find(us_dic.product_name):
+                print(f'Product : {us_dic.product_name} found!')
+                if int(us_dic.product_price) < int(main_product.product_price):
                     LogModel.objects.create(
                         logName="down",
-                        logType=f'{us_product.us_product_name}<{main_product.product_name}',
+                        logType=f'{us_dic.product_name}<{main_product.product_name}',
                     )
                     P.objects.filter(product_name=main_product.product_name).update(
                         product_status="down",
                     )
                     comparison_results.append({
                         'status': 'down',
-                        'context': f'کالای {us_product.us_product_name} توسط بای کیف و با قیمت {main_product.product_price} زیر شده',
+                        'context': f'کالای {us_dic.product_name} توسط بای کیف و با قیمت {main_product.product_price} زیر شده',
                         'success': True
                     })
-                elif int(us_product.us_product_price) == int(main_product.product_price):
+                elif int(us_dic.product_price) == int(main_product.product_price):
                     P.objects.filter(product_name=main_product.product_name).update(
                         product_status="equals",
                     )
                     comparison_results.append({
                         'status': 'equals',
-                        'context': f'کالای {us_product.us_product_name} با کالای {main_product.product_name} برابر است در سایت {main_product.product_parent}',
+                        'context': f'کالای {us_dic.product_name} با کالای {main_product.product_name} برابر است در سایت {main_product.product_parent}',
                         'success': True
                     })
                 else:
-                    print(f'{us_product.us_product_name} normal price')
+                    print(f'{us_dic.product_name} normal price')
                     P.objects.filter(product_name=main_product.product_name).update(
                         product_status="up",
                     )

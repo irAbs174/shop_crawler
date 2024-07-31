@@ -40,7 +40,7 @@ def log_error(message):
     """Log errors to the database."""
     LogModel.objects.create(logName='error', logType="error")
 
-def handle_job(job, ua):
+def handle_job(ua):
     targets = TargetModel.objects.all()
     for target in targets:
                 
@@ -48,8 +48,9 @@ def handle_job(job, ua):
         jobName = target.targetName
         jobArg = target.targetUrl
         headers = {'User-Agent': ua.random}
-            
-        sitemap_soup = crawler(f'{jobArg}/{target.target_sitemap}', headers=headers)
+        print("start")
+        print(jobArg,target.target_sitemap )
+        sitemap_soup = crawler(f'https://{jobArg}/{target.target_sitemap}', headers=headers)
         product_sitemap = get_products_sitemap(sitemap_soup)
         for i in product_sitemap:
             SiteMap.objects.create(target=jobArg, siteMapUrl=i)
@@ -60,12 +61,13 @@ def handle_job(job, ua):
         product_urls = []
         for i in products_list:
             today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            if Prodoct.objects.filter(product_url=i, product_parent=jobArg, created_at=today).exist():
-                pass
+            if Product.objects.filter(product_url=i, product_parent=jobArg, created_at=today).exists():
+                print(f'=>{i} Exist!')
             else:
                 Product.objects.create(product_url=i, product_parent=jobArg, product_type=target.targetType)
                 product_urls.append(i)
                 print(f'product url: {i} saved to db')
+
         if product_urls:
             for i in product_urls:  
                 info = get_product_info(i, ua)
@@ -74,7 +76,9 @@ def handle_job(job, ua):
                     product_price=info['price'],
                     product_stock=info['status'],
                 )
-            print(f'save product detail {info}')
+                print(f'save product detail {info}')
+        else:
+            print("Not Url")
 
         LogModel.objects.create(
             logName=f"{jobArg} => crawl-completed",
@@ -104,9 +108,7 @@ def perform_crawl():
     while True:
         try:
             LogModel.objects.create(logName='bot_status', logType="online")
-            job = JobsModel.objects.first()
-            if job:
-                handle_job(job, ua)
+            handle_job(ua)
             for i in range(SLEEP_DURATION):
                 print(f'BOT SLEEP FOR {i} SEC')
                 time.sleep(1)
