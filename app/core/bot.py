@@ -100,7 +100,9 @@ def handle_product_management(message):
     elif message.text == 'محصولات تحت نظر':
         get_us_products(message)
     elif message.text == 'برون بری':
-        get_us_products(message)
+            progress_message = bot.send_message(message.chat.id, "در حال تولید فایل Excel، لطفاً صبر کنید...")
+            file = open('products.xlsx', 'rb')
+            bot.send_document(message.chat.id, file, caption="لیست محصولات")
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
