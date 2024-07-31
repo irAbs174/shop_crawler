@@ -71,12 +71,15 @@ def handle_job(ua):
         if product_urls:
             for i in product_urls:  
                 info = get_product_info(i, ua)
-                Product.objects.filter(product_parent=jobArg, product_url=i).update(
-                    product_name=info['name'],
-                    product_price=info['price'],
-                    product_stock=info['status'],
-                )
-                print(f'save product detail {info}')
+                if Product.objects.filter(product_url=i, product_parent=jobArg,  product_price=info['price'], created_at=today).exists():
+                    print(f'=>{i} Exist!')
+                else:
+                    Product.objects.filter(product_parent=jobArg, product_url=i).update(
+                        product_name=info['name'],
+                        product_price=info['price'],
+                        product_stock=info['status'],
+                    )
+                    print(f'save product detail {info}')
         else:
             print("Not Url")
 
