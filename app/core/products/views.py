@@ -17,10 +17,10 @@ import json
 
 @csrf_exempt
 def register(request):
-    userId = request.POST('userId')
-    username = request.POST('username')
-    first_name = request.POST('first_name')
-    last_name = request.POST('last_name')
+    userId = request.POST.get('userId')
+    username = request.POST.get('username')
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
     if BotUsers.objects.filter(userId=userId).exists():
         content = {'status':'کاربر از قبل موجود است', 'success': True}
     else:
@@ -32,6 +32,7 @@ def register(request):
         )
         content = {'status': 'کاربر با موفقیت ثبت شده', 'success': True}
     return JsonResponse(content)
+
 @csrf_exempt
 def perform_comparison(request):
     """Compare product prices between main and US products."""
