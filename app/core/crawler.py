@@ -50,10 +50,13 @@ def handle_job(ua):
         """Process a single job."""
         jobName = target.targetName
         jobArg = target.targetUrl
+        logType = f'{jobName}=>{jobArg}'
+        LogModel.objects.create(logName='شروع خزیدن:', logType=logType)
         headers = {'User-Agent': ua.random}
         print("start")
         print(jobArg,target.target_sitemap )
         sitemap_soup = crawler(f'https://{jobArg}/{target.target_sitemap}', headers=headers)
+        LogModel.objects.create(logName='گزارش:', logType=f"{len(sitemap_soup)} عدد سایت مپ پیدا شد {jobName}")
         product_sitemap = get_products_sitemap(sitemap_soup)
         for i in product_sitemap:
             SiteMap.objects.create(target=jobArg, siteMapUrl=i)
@@ -73,6 +76,7 @@ def handle_job(ua):
                 print(f'product url: {i} saved to db')
 
         if product_urls:
+            LogModel.objects.create(logName='گزارش:', logType=f"{len(product_urls)} عدد محصول پیدا شد {jobName}")
             for i in product_urls:  
                 info = get_product_info(i, ua)
                 if Product.objects.filter(product_url=i, product_parent=jobArg,  product_price=info['price']).exists():
@@ -85,31 +89,31 @@ def handle_job(ua):
                     )
                     print(f'save product detail {info}')
         else:
+            LogModel.objects.create(logName='گزارش:', logType=f"محصولی یافت نشد {jobName}")
             print("Not Url")
-
-        LogModel.objects.create(
-            logName=f"{jobArg} => crawl-completed",
-            logType="notification",
-            scanedProducts=f'{len(Product.objects.filter(product_parent=jobArg))}',
-        )
 
         perform_comparison(jobArg)
 
         perform_export(jobName, jobArg)
+
+        count = Product.objects.filter(product_parent=jobArg).count()
         
-        LogModel.objects.filter(logName='bot_status').update(logType="offline")
+        logType = f"اتمام کار خزنده => سایت:{jobName} و تعداد {count} محصول اسکن شده"
+
+        LogModel.objects.create(logName='پایان خزیدن', logType=logType)
 
 def perform_comparison(jobArg):
     ctx = {
         'jobArg': jobArg,
     }
     response = requests.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
+    LogModel.objects.create(logName='گزارش:', logType="مقایسه انجام شد")
     print(response)
 
 def perform_export(jobName, jobArg):
     fields = ['فروشگاه', 'نام محصول', 'قیمت', 'وضعیت', 'موجودی', 'آدرس محصول']
     rows = []
-    response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={})
+    response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={'jobArg':jobArg})
     for i in response.json()['status']:
         if i['price'] == '0':
             stock = 'ناموجود'
@@ -146,7 +150,6 @@ def perform_crawl():
     """Perform the crawling job in an infinite loop."""
     while True:
         try:
-            LogModel.objects.create(logName='bot_status', logType="online")
             handle_job(ua)
             for i in range(SLEEP_DURATION):
                 print(f'BOT SLEEP FOR {i} SEC')

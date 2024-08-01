@@ -1,7 +1,5 @@
 from django.urls import path
 from .views import (
-    auth,
-    auth_send_otp,
     get_products_api,
     get_us_products_api,
     get_jobs_api,
@@ -13,13 +11,12 @@ from .views import (
     add_us_products_api,
     add_jobs_api,
     perform_comparison,
-    register
+    register,
+    single_comparison
 )
 
 urlpatterns = [
     path('register', register),
-    path('auth', auth),
-    path('auth_send_otp', auth_send_otp),
     path('get_products_api', get_products_api),
     path('get_us_products_api',get_us_products_api ),
     path('get_jobs_api', get_jobs_api),
@@ -30,5 +27,6 @@ urlpatterns = [
     path('get_normal_products_price_api', get_normal_products_price_api),
     path('add_us_products_api', add_us_products_api),
     path('add_jobs_api', add_jobs_api),
-    path('perform_comparison', perform_comparison)
+    path('perform_comparison', perform_comparison),
+    path('single_comparison', single_comparison)
 ]

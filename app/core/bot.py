@@ -8,7 +8,7 @@ TOKEN = "7475255594:AAHW5qXvU9h9LaOHfaZgSRH5618ZhPBLuQQ"
 bot = telebot.TeleBot(TOKEN)
 
 # List of authorized usernames
-USERSNAMES = [
+USERNAMES = [
     'Unique174',
     'fghani41',
     'maryamghzh',
@@ -27,15 +27,22 @@ def send_welcome(message):
     first_name = message.from_user.first_name
     last_name = message.from_user.last_name
 
-    if username in USERSNAMES:
+    if username in USERNAMES:
         user = {
-            'userId' : userId,
+            'userId': userId,
             'username': username,
             'first_name': first_name,
             'last_name': last_name
         }
-        response = requests.post("http://0.0.0.0:8080/api/register", user)
-        print(response.json())
+        try:
+            response = requests.post("http://0.0.0.0:8080/api/register", json=user)
+            response_data = response.json()
+            print(f"Registration response: {response_data}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error during registration: {e}")
+            bot.send_message(message.chat.id, "خطایی در ثبت نام رخ داده است.")
+            return
+
         answer = f"سلام, <b>{escape(message.from_user.full_name)}</b>! خوش آمدید."
         bot.send_message(message.chat.id, answer, parse_mode='HTML')
         main_menu(message)
@@ -54,10 +61,20 @@ def main_menu(message):
     markup.add(*[types.KeyboardButton(button) for button in buttons])
     bot.send_message(message.chat.id, "لطفا یک گزینه انتخاب کنید", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text in ['برون بری', 'محصولات','اهداف','گزارشات','مشاهده کار جاری','کاربران ربات','بازگشت'])
+@bot.message_handler()
 def handle_buttons(message):
-    if message.text == 'محصولات':
-        new_buttons = ['برون بری', 'محصولات قیمت بالا','محصولات زیر شده', 'محصولات هم قیمت', 'محصولات تحت نظر', 'بازگشت']
+    print(f"Received button press: {message.text}")
+    if message.text.startswith('?'):
+        product = message.text.split('?')[1]
+        res = requests.post('http://0.0.0.0:8080/api/single_comparison', data={'product_name' : product}).json()
+        for i in res['status']:
+            name = i['name']
+            price = i['price']
+            stock = i['stock']
+            url = i['url']
+            bot.send_message(message.chat.id, f"کالا: {name} \n قیمت: {price} \n آدرس محصول {url} \n موجودی: {stock}")
+    elif message.text == 'محصولات':
+        new_buttons = ['مقایسه','برون بری', 'محصولات قیمت بالا', 'محصولات زیر شده', 'محصولات هم قیمت', 'بازگشت']
         new_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
         bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
@@ -67,103 +84,122 @@ def handle_buttons(message):
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
         bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
     elif message.text == 'گزارشات':
-        new_buttons = ['گزارشات اسکن', 'بازگشت']
-        new_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
-        bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
-    elif message.text == 'مشاهده کار جاری':
-        bot.send_message(message.chat.id, "در حال حاضر کار جاری نداریم!")
+        get_reports(message)
     elif message.text == 'کاربران ربات':
         bot.send_message(message.chat.id, "لیست کاربران ربات:")
-        for user in USERSNAMES:
+        for user in USERNAMES:
             bot.send_message(message.chat.id, user)
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
         handle_product_management(message)
 
-def handle_logs_management(message):
-    if message.text == 'گزارشات اسکن':
-        get_reports(message)
-    elif message.text == 'بازگشت':
-        main_menu(message)
-    else:
-        bot.send_message(message.chat.id, "دستور نامعتبر است.")
-
 def handle_product_management(message):
+    print(f"Handling product management: {message.text}")
     if message.text == 'محصولات قیمت بالا':
-        get_reports(message)
+        get_us_products(message)
+    elif message.text == 'مقایسه':
+        progress_message = bot.send_message(message.chat.id, "در حال مقایسه محصولات لطفاً صبر کنید...")
+        res = requests.post('http://0.0.0.0:8080/api/perform_comparison',data={'jobArg':'all'}).json()
+        bot.send_message(message.chat.id, res['status'])
     elif message.text == 'محصولات زیر شده':
-        get_down_products(message)
+        try:
+            res = requests.post('http://0.0.0.0:8080/api/get_down_products_price_api').json()
+            print(f"Received down products: {res}")
+            if res['status']:
+                for i in res['status']:
+                    name = i['name']
+                    price = i['price']
+                    stock = i['stock']
+                    url = i['url']
+                    parent = i['parent']
+                    msg = f'''
+        نام محصول : {name}
+        قیمت : {price}
+        وضعیت موجودی : {stock}
+        آدرس صفحه محصول : {url}
+        فروشگاه : {parent}
+                    '''
+                    bot.send_message(message.chat.id, msg)
+            else:
+                bot.send_message(message.chat.id, "هنوز کالایی زیر نشده")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            bot.send_message(message.chat.id, "خطایی در دریافت محصولات رخ داده است.")
     elif message.text == 'محصولات هم قیمت':
         get_equals_products(message)
-    elif message.text == 'محصولات تحت نظر':
-        get_us_products(message)
     elif message.text == 'برون بری':
-            progress_message = bot.send_message(message.chat.id, "در حال تولید فایل خروجی لطفاً صبر کنید...")
-            file = open(f'Products_Export=>buykif.csv', 'rb')
-            bot.send_document(message.chat.id, file, caption="لیست محصولات بای کیف")
-            file = open(f'Products_Export=>123kif.csv', 'rb')
-            bot.send_document(message.chat.id, file, caption="لیست محصولات یک دو سه کیف")
+        progress_message = bot.send_message(message.chat.id, "در حال تولید فایل خروجی لطفاً صبر کنید...")
+        try:
+            with open('Products_Export=>buykif.csv', 'rb') as file:
+                bot.send_document(message.chat.id, file, caption="لیست محصولات بای کیف")
+            with open('Products_Export=>123kif.csv', 'rb') as file:
+                bot.send_document(message.chat.id, file, caption="لیست محصولات یک دو سه کیف")
+        except FileNotFoundError as e:
+            bot.send_message(message.chat.id, "خطا در ارسال فایل: فایل پیدا نشد.")
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
         bot.send_message(message.chat.id, "دستور نامعتبر است.")
 
 def get_reports(message):
-    response = requests.post('http://0.0.0.0:8080/api/get_logs_api').json()
-    if response['success']:
-        msg = "آخرین گزارشات:\n"
-        for log in response['status']:
-            msg += f"{escape(log['name'])}: {escape(log['logType'])}\n"
-        bot.send_message(message.chat.id, msg)
-    else:
+    print("Fetching reports")
+    try:
+        response = requests.post('http://0.0.0.0:8080/api/get_logs_api').json()
+        if response['success']:
+            msg = "آخرین گزارشات:\n"
+            for log in response['status']:
+                msg += f"{escape(log['name'])}: {log['logType']}\n\n\n"
+            bot.send_message(message.chat.id, msg)
+        else:
+            bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
         bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
 
-def get_down_products(message):
-    res = requests.post('http://0.0.0.0:8080/api/get_down_products_price_api').json()
-    for i in res['status']:
-        name = i['name']
-        price = i['price']
-        stock = i['stock']
-        url = i['url']
-        parent = i['parent']
-        msg = f'''
-نام محصول : {name}
-قیمت : {price}
-وضعیت موجودی : {stock}
-آدرس صفحه محصول : {url}
-فروشگاه : {parent}
-        '''
-        bot.send_message(message.chat.id, msg)
-
 def get_equals_products(message):
-    res = requests.post('http://0.0.0.0:8080/api/get_equals_products_price_api').json()
-    for i in res['status']:
-        name = i['name']
-        price = i['price']
-        stock = i['stock']
-        url = i['url']
-        parent = i['parent']
-        msg = f'''
-نام محصول : {name}
-قیمت : {price}
-وضعیت موجودی : {stock}
-آدرس صفحه محصول : {url}
-فروشگاه : {parent}
-        '''
-        bot.send_message(message.chat.id, msg)
+    print("Fetching equals products")
+    try:
+        res = requests.post('http://0.0.0.0:8080/api/get_equals_products_price_api').json()
+        if res['status']:
+            for i in res['status']:
+                name = i['name']
+                price = i['price']
+                stock = i['stock']
+                url = i['url']
+                parent = i['parent']
+                msg = f'''
+    نام محصول : {name}
+    قیمت : {price}
+    وضعیت موجودی : {stock}
+    آدرس صفحه محصول : {url}
+    فروشگاه : {parent}
+                '''
+                bot.send_message(message.chat.id, msg)
+        else:
+            bot.send_message(message.chat.id, 'کالای هم قیمت یافت نشد')
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        bot.send_message(message.chat.id, "خطایی در دریافت محصولات رخ داده است.")
 
 def get_us_products(message):
-    res = requests.post('http://0.0.0.0:8080/api/get_us_products_api').json()
-    for i in res['status']:
-        name = i['name']
-        price = i['price']
-        msg = f'''
-نام محصول : {name}
-قیمت : {price}
-        '''
-        bot.send_message(message.chat.id, msg)
+    print("Fetching us products")
+    try:
+        res = requests.post('http://0.0.0.0:8080/api/get_us_products_api').json()
+        if res['status']:
+            for i in res['status']:
+                name = i['name']
+                price = i['price']
+                msg = f'''
+    نام محصول : {name}
+    قیمت : {price}
+                '''
+                bot.send_message(message.chat.id, msg)
+        else:
+            bot.send_message(message.chat.id, 'کالای با قیمت بالاتر از مرجع یافت نشد')
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        bot.send_message(message.chat.id, "خطایی در دریافت محصولات رخ داده است.")
 
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
