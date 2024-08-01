@@ -29,16 +29,19 @@ def get_chat_id(request):
 
 @csrf_exempt
 def newLogs(requests):
-    logs = LogModel.objects.filter(send_status='')
-    ctx = ['']
+    logs = LogModel.objects.all()
+    ctx = []
     for log in logs:
-        item = {
-            'logName': log.logName,
-            'logType': logType,
-        }
-        ctx.append(item)
+        if not log.send_status:
+            item = {
+                'logName': log.logName,
+                'logType': log.logType,
+            }
+            ctx.append(item)
     
-    logs.objects.all().update(send_status="yes")
+    print(ctx)
+    logs.update(send_status='yes')
+
     return JsonResponse({'status':ctx, 'success':True})
 
 

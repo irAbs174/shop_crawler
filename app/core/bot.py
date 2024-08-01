@@ -4,6 +4,7 @@ import requests
 from html import escape
 import schedule
 from threading import Thread
+import time
 
 # Bot token
 TOKEN = "7475255594:AAHW5qXvU9h9LaOHfaZgSRH5618ZhPBLuQQ"
@@ -12,31 +13,34 @@ bot = telebot.TeleBot(TOKEN)
 def check_api_and_notify():
     try:
         response = requests.post('http://0.0.0.0:8080/api/newLogs').json()
-        if response['status'] != []:
+        if response['status'] != ['']:
+            print(response['status'])
             for j in response['status']:
-                logName = j.logName
-                logType = j.logType
+                logName = j['logName']
+                logType = j['logType']
                 res = requests.post('http://0.0.0.0:8080/api/get_chat_id').json()
                 for i in res['status']:
-                    userId = i.chatId
-                    msg = f"""
-                    گزارش جدید خزنده‌ !
-                    {logName} \n
-                    {logType}
-                    """
-                    bot.send_message(userId,msg)
+                    print(res['status'])
+                    print(i)
+                    userId = i['chatId']
+                    if userId:
+                        msg = f"""
+                        گزارش جدید خزنده‌ !
+                        {logName} \n
+                        {logType}
+                        """
+                        bot.send_message(int(userId),msg)
         else:
-            #empty 
+            print('noting !')
     except requests.exceptions.RequestException as e:
         print(f"API request failed: {e}")
 
 def job():
     print("Checking API...")
     check_api_and_notify()
-    print("Notification sent")
 
 # Schedule the job every 100 seconds
-schedule.every(100).seconds.do(job)
+schedule.every(180).seconds.do(job)
 
 def run_schedule():
     while True:

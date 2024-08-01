@@ -51,7 +51,7 @@ def handle_job(ua):
         jobName = target.targetName
         jobArg = target.targetUrl
         logType = f'{jobName}=>{jobArg}'
-        LogModel.objects.create(logName='شروع خزیدن:', logType=logType)
+        LogModel.objects.create(logName='شروع خزیدن:', logType=logType,)
         headers = {'User-Agent': ua.random}
         print("start")
         print(jobArg,target.target_sitemap )
