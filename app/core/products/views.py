@@ -17,6 +17,32 @@ import random
 import json
 
 @csrf_exempt
+def get_chat_id(request):
+    ctx = []
+    for i in BotUsers.objects.all():
+        item = {
+            'chatId': i.userId,
+        }
+        ctx.append(item)
+
+    return JsonResponse({'status':ctx, 'success': True})
+
+@csrf_exempt
+def newLogs(requests):
+    logs = LogModel.objects.filter(send_status='')
+    ctx = ['']
+    for log in logs:
+        item = {
+            'logName': log.logName,
+            'logType': logType,
+        }
+        ctx.append(item)
+    
+    logs.objects.all().update(send_status="yes")
+    return JsonResponse({'status':ctx, 'success':True})
+
+
+@csrf_exempt
 def register(request):
     userId = request.POST.get('userId')
     username = request.POST.get('username')

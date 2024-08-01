@@ -2,10 +2,46 @@ import telebot
 from telebot import types
 import requests
 from html import escape
+import schedule
+from threading import Thread
 
 # Bot token
 TOKEN = "7475255594:AAHW5qXvU9h9LaOHfaZgSRH5618ZhPBLuQQ"
 bot = telebot.TeleBot(TOKEN)
+
+def check_api_and_notify():
+    try:
+        response = requests.post('http://0.0.0.0:8080/api/newLogs').json()
+        if response['status'] != []:
+            for j in response['status']:
+                logName = j.logName
+                logType = j.logType
+                res = requests.post('http://0.0.0.0:8080/api/get_chat_id').json()
+                for i in res['status']:
+                    userId = i.chatId
+                    msg = f"""
+                    گزارش جدید خزنده‌ !
+                    {logName} \n
+                    {logType}
+                    """
+                    bot.send_message(userId,msg)
+        else:
+            #empty 
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+
+def job():
+    print("Checking API...")
+    check_api_and_notify()
+    print("Notification sent")
+
+# Schedule the job every 100 seconds
+schedule.every(100).seconds.do(job)
+
+def run_schedule():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 # List of authorized usernames
 USERNAMES = [
@@ -217,4 +253,9 @@ def handle_inline_buttons(call):
         bot.send_message(call.message.chat.id, "شما دکمه Inline Button 2 را کلیک کردید!")
 
 if __name__ == '__main__':
+    # Start the scheduling in a separate thread
+    schedule_thread = Thread(target=run_schedule)
+    schedule_thread.start()
+    
+    # Start the bot (optional if you want bot interaction)
     bot.infinity_polling()

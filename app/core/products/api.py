@@ -12,7 +12,9 @@ from .views import (
     add_jobs_api,
     perform_comparison,
     register,
-    single_comparison
+    single_comparison,
+    newLogs,
+    get_chat_id
 )
 
 urlpatterns = [
@@ -28,5 +30,7 @@ urlpatterns = [
     path('add_us_products_api', add_us_products_api),
     path('add_jobs_api', add_jobs_api),
     path('perform_comparison', perform_comparison),
-    path('single_comparison', single_comparison)
+    path('single_comparison', single_comparison),
+    path('newLogs', newLogs),
+    path('get_chat_id', get_chat_id)
 ]
