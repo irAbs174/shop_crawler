@@ -105,16 +105,7 @@ def main_menu(message):
 @bot.message_handler()
 def handle_buttons(message):
     print(f"Received button press: {message.text}")
-    if message.text.startswith('?'):
-        product = message.text.split('?')[1]
-        res = requests.post('http://0.0.0.0:8080/api/single_comparison', data={'product_name' : product}).json()
-        for i in res['status']:
-            name = i['name']
-            price = i['price']
-            stock = i['stock']
-            url = i['url']
-            bot.send_message(message.chat.id, f"کالا: {name} \n قیمت: {price} \n آدرس محصول {url} \n موجودی: {stock}")
-    elif message.text == 'محصولات':
+    if message.text == 'محصولات':
         new_buttons = ['مقایسه','برون بری', 'محصولات قیمت بالا', 'محصولات زیر شده', 'محصولات هم قیمت', 'بازگشت']
         new_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
@@ -181,7 +172,14 @@ def handle_product_management(message):
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
-        bot.send_message(message.chat.id, "دستور نامعتبر است.")
+        product = message.text
+        res = requests.post('http://0.0.0.0:8080/api/single_comparison', data={'product_name' : product}).json()
+        for i in res['status']:
+            name = i['name']
+            price = i['price']
+            stock = i['stock']
+            url = i['url']
+            bot.send_message(message.chat.id, f"کالا: {name} \n قیمت: {price} \n آدرس محصول {url} \n موجودی: {stock}")
 
 def get_reports(message):
     print("Fetching reports")
