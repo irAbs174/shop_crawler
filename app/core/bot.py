@@ -57,7 +57,7 @@ USERNAMES = [
     'EhsanPishyar',
     'Sunaazzz1993',
     'Khakia2424',
-    '@Toktam_rbj',
+    'Toktam_rbj',
 ]
 
 # Handle the /start command
