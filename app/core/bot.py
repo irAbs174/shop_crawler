@@ -74,8 +74,9 @@ def send_welcome(message):
             'first_name': first_name,
             'last_name': last_name
         }
+        print(user)
         try:
-            response = requests.post("http://0.0.0.0:8080/api/register", json=user)
+            response = requests.post("http://0.0.0.0:8080/api/register", data=user)
             response_data = response.json()
             print(f"Registration response: {response_data}")
         except requests.exceptions.RequestException as e:
