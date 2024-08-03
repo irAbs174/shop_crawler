@@ -15,6 +15,7 @@ from core.sec import kavenegar_api_key
 from kavenegar import *
 import random
 import json
+import re
 
 @csrf_exempt
 def get_chat_id(request):
@@ -95,7 +96,9 @@ def perform_comparison(request):
             try:
                 for main_product in main_dic:
                     for us_dic in uss_dic:
-                        if (us_dic.product_url.split('/')[4]) in main_product.product_name:
+                        pattern = r'\b[a-zA-Z]{2,}\d{2,}\b'
+                        matches = re.findall(pattern, us_dic.product_name)
+                        if P.objects.filter(product_type='normal' ,product_name__contains=matches):
                             print(f'Product : {us_dic.product_name} found!')
                             if int(us_dic.product_price) < int(main_product.product_price):
                                 LogModel.objects.create(
