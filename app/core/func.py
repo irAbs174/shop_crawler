@@ -59,9 +59,7 @@ def get_products_list(products_sitemap_list, ua):
 
 def get_product_info(product_address, ua):
 
-    headers = {'User-Agent': ua.random}
-
-    content_html = crawler(product_address, headers=headers)
+    content_html = bs4(R.get(product_address).text, 'html.parser')
 
     stock = content_html.select('p.out-of-stock')
 
@@ -134,12 +132,13 @@ def get_product_info(product_address, ua):
                     'status': 'ناموجود',
                     }
             else:
-                if stock[0].text == 'متاسفانه این محصول در حال حاضر موجود نمی باشد. می توانید از لیست پایین همین برگه، محصولات مشابه آن را مشاهده کنید.':
-                    return {
-                        'name': product_name,
-                        'price': 0,
-                        'status': 'ناموجود',
-                        }
+                if stock != []:
+                    if stock[0].text == 'متاسفانه این محصول در حال حاضر موجود نمی باشد. می توانید از لیست پایین همین برگه، محصولات مشابه آن را مشاهده کنید.':
+                        return {
+                            'name': product_name,
+                            'price': 0,
+                            'status': 'ناموجود',
+                            }
                 else:
                     # Extract and convert price
                     price_element = content_html.find(class_='woocommerce-Price-amount amount')
