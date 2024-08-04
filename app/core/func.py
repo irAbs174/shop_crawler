@@ -58,17 +58,20 @@ def get_products_list(products_sitemap_list, ua):
     return products_list
 
 def get_product_info(product_address, ua):
+
+    headers = {'User-Agent': ua.random}
+
+    content_html = crawler(product_address, headers=headers)
+
+    stock = content_html.select('p.out-of-stock')
+
     try:
         if '123kif' in product_address:
-            headers = {'User-Agent': ua.random}
-            content_html = crawler(product_address, headers=headers)
-        
+
             if content_html is None:
                 return None
 
             product_name = content_html.title.text
-
-            stock = content_html.select('p.out-of-stock')
 
             if stock == []:
                 print("MOJOD")
@@ -131,20 +134,27 @@ def get_product_info(product_address, ua):
                     'status': 'ناموجود',
                     }
             else:
-                # Extract and convert price
-                price_element = content_html.find(class_='woocommerce-Price-amount amount')
-                price_text = price_element.text
-                price_digits = re.sub(r'[^\d]', '', price_text)
-                if price_digits.isdigit():
-                    price = int(price_digits) * 4
+                if stock[0].text == 'متاسفانه این محصول در حال حاضر موجود نمی باشد. می توانید از لیست پایین همین برگه، محصولات مشابه آن را مشاهده کنید.':
+                    return {
+                        'name': product_name,
+                        'price': 0,
+                        'status': 'ناموجود',
+                        }
                 else:
-                    price = '0'  # Price not found or invalid
-                
-                return {
-                    'name': product_name,
-                    'price': price,
-                    'status': 'موجود',
-                }
+                    # Extract and convert price
+                    price_element = content_html.find(class_='woocommerce-Price-amount amount')
+                    price_text = price_element.text
+                    price_digits = re.sub(r'[^\d]', '', price_text)
+                    if price_digits.isdigit():
+                        price = int(price_digits) * 4
+                    else:
+                        price = '0'  # Price not found or invalid
+                    
+                    return {
+                        'name': product_name,
+                        'price': price,
+                        'status': 'موجود',
+                    }
         elif 'snapshop' in product_address:
             pass
         elif 'digikala' in product_address:

@@ -40,7 +40,7 @@ def job():
     check_api_and_notify()
 
 # Schedule the job every 100 seconds
-schedule.every(180).seconds.do(job)
+schedule.every(60*60*12).seconds.do(job)
 
 def run_schedule():
     while True:
@@ -132,9 +132,12 @@ def handle_product_management(message):
     if message.text == 'محصولات قیمت بالا':
         get_us_products(message)
     elif message.text == 'مقایسه':
-        progress_message = bot.send_message(message.chat.id, "در حال مقایسه محصولات لطفاً صبر کنید...")
-        res = requests.post('http://0.0.0.0:8080/api/perform_comparison',data={'jobArg':'all'}).json()
-        bot.send_message(message.chat.id, res['status'])
+        try:
+            res = requests.post('http://0.0.0.0:8080/api/perform_comparison',{}).json()
+            progress_message = bot.send_message(message.chat.id, "در حال مقایسه محصولات لطفاً صبر کنید...")
+            bot.send_message(message.chat.id, res['status'])
+        except Exception as e:
+            bot.send_message(message.chat.id, e)
     elif message.text == 'محصولات زیر شده':
         try:
             res = requests.post('http://0.0.0.0:8080/api/get_down_products_price_api').json()

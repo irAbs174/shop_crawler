@@ -103,10 +103,7 @@ def handle_job(ua):
         LogModel.objects.create(logName='پایان خزیدن', logType=logType)
 
 def perform_comparison(jobArg):
-    ctx = {
-        'jobArg': jobArg,
-    }
-    response = requests.post('http://0.0.0.0:8080/api/perform_comparison', ctx).json()
+    response = requests.post('http://0.0.0.0:8080/api/perform_comparison', {}).json()
     LogModel.objects.create(logName='گزارش:', logType="مقایسه انجام شد")
     print(response)
 

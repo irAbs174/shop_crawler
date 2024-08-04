@@ -12,6 +12,7 @@ from .models import (
     BotUsers,
 )
 from core.sec import kavenegar_api_key
+from django.db.models import Q
 from kavenegar import *
 import random
 import json
@@ -85,121 +86,51 @@ def single_comparison(request):
 
 @csrf_exempt
 def perform_comparison(request):
-    jobArg = request.POST.get('jobArg')
-    if jobArg == 'all':
-        targets = TargetModel.objects.filter(targetType='normal')
-        for target in targets:
-            jobArg = target.targetUrl,
-            main_dic = P.objects.filter(product_type='normal')
-            uss_dic = P.objects.filter(product_type = 'main')
-            comparison_results = []
-            try:
-                for main_product in main_dic:
-                    for us_dic in uss_dic:
-                        pattern = r'\b[a-zA-Z]{2,}\d{2,}\b'
-                        matches = re.findall(pattern, us_dic.product_name)
-                        if P.objects.filter(product_type='normal' ,product_name__contains=matches):
-                            print(f'Product : {us_dic.product_name} found!')
-                            if int(us_dic.product_price) < int(main_product.product_price):
-                                LogModel.objects.create(
-                                    logName="گزارش زیر کردن قیمت:",
-                                    logType=f'کالای مرجع:{us_dic.product_name} \n کالای زیر قیمت مرجع:{main_product.product_name} و با قیمت {main_product.product_price}',
-                                )
-                                P.objects.filter(product_name=main_product.product_name).update(
-                                    product_status="down",
-                                )
-                                comparison_results.append({
-                                    'status': 'down',
-                                    'context': f'کالای {us_dic.product_name} توسط بای کیف و با قیمت {main_product.product_price} زیر شده',
-                                    'success': True
-                                })
-                            elif int(us_dic.product_price) == int(main_product.product_price):
-                                P.objects.filter(product_name=main_product.product_name).update(
-                                    product_status="equals",
-                                )
-                                comparison_results.append({
-                                    'status': 'equals',
-                                    'context': f'کالای {us_dic.product_name} با کالای {main_product.product_name} برابر است در سایت {main_product.product_parent}',
-                                    'success': True
-                                })
-                            else:
-                                print(f'{us_dic.product_name} normal price')
-                                P.objects.filter(product_name=main_product.product_name).update(
-                                    product_status="up",
-                                )
-                                comparison_results.append({
-                                    'status': 'normal',
-                                    'success': True
-                                })
+    print("Starting perform_comparison")
+
+    main_dic = P.objects.filter(product_type='normal')
+    uss_dic = P.objects.filter(product_type='main')
+    
+    print(f"Main products count: {main_dic.count()}")
+    print(f"USS products count: {uss_dic.count()}")
+    
+    try:
+        for us_dic in uss_dic:
+            print(f"USS product: {us_dic.product_name} - {us_dic.product_price}")
+            
+            if us_dic.product_name:
+                pattern = r'\b[a-zA-Z]{2,}\d{2,}\b'
+                matches = re.findall(pattern, us_dic.product_name)
+                print(f"Matches: {matches}")
+                
+                if matches:
+                    if P.objects.filter(product_type='normal', product_name__contains=matches[0]).exists():
+                        main_product = P.objects.filter(product_type='normal', product_name__contains=matches[0])[0]
+                        print(f'Product : {us_dic.product_name} found!')
+                        
+                        us_dic_price = int(us_dic.product_price)
+                        main_product_price = int(main_product.product_price)
+                        
+                        if us_dic_price < main_product_price:
+                            LogModel.objects.create(
+                                        logName="گزارش زیر کردن قیمت:",
+                                        logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
+                                    )
+                            P.objects.filter(product_name=main_product.product_name).update(
+                                        product_status="down",
+                                    )
+                        elif us_dic_price == main_product_price:
+                            P.objects.filter(product_name=main_product.product_name).update(
+                                product_status="equals",
+                            )
                         else:
-                            comparison_results.append({
-                                'status': 'not exist!',
-                                'success': False
-                            })
-                
-                if not comparison_results:
-                    # This handles the case where no products were compared
-                    return JsonResponse({'status': 'محصولی مقایسه نشد', 'success': False})
-                
-                return JsonResponse({'results': 'محصولی مقایسه نشد', 'success': True})
+                            P.objects.filter(product_name=main_product.product_name).update(
+                                        product_status="up",
+                            )
+    except Exception as e:
+        return JsonResponse({'status': 'در حال حاظر ربات در حال تکمیل اطلاعات است. لطفا کمی بعد دوباره تلاش کنید', 'success': False})
 
-            except Exception as e:
-                return JsonResponse({'status': 'در حال حاظر ربات در حال تکمیل اطلاعات است. لطفا کمی بعد دوباره تلاش کنید', 'success': False})
-    else:
-        main_dic = P.objects.filter(product_parent=jobArg)
-        uss_dic = P.objects.filter(product_type = 'main')
-        comparison_results = []
-        
-        try:
-            for main_product, us_dic in zip(main_dic, uss_dic):
-                print(main_product, us_dic)
-                if main_product.product_name.find(us_dic.product_url.split('/')[4] ):
-                    print(f'Product : {us_dic.product_name} found!')
-                    if int(us_dic.product_price) < int(main_product.product_price):
-                        LogModel.objects.create(
-                            logName="down",
-                            logType=f'{us_dic.product_name}<{main_product.product_name}',
-                        )
-                        P.objects.filter(product_name=main_product.product_name).update(
-                            product_status="down",
-                        )
-                        comparison_results.append({
-                            'status': 'down',
-                            'context': f'کالای {us_dic.product_name} توسط بای کیف و با قیمت {main_product.product_price} زیر شده',
-                            'success': True
-                        })
-                    elif int(us_dic.product_price) == int(main_product.product_price):
-                        P.objects.filter(product_name=main_product.product_name).update(
-                            product_status="equals",
-                        )
-                        comparison_results.append({
-                            'status': 'equals',
-                            'context': f'کالای {us_dic.product_name} با کالای {main_product.product_name} برابر است در سایت {main_product.product_parent}',
-                            'success': True
-                        })
-                    else:
-                        print(f'{us_dic.product_name} normal price')
-                        P.objects.filter(product_name=main_product.product_name).update(
-                            product_status="up",
-                        )
-                        comparison_results.append({
-                            'status': 'normal',
-                            'success': True
-                        })
-                else:
-                    comparison_results.append({
-                        'status': 'not exist!',
-                        'success': False
-                    })
-            
-            if not comparison_results:
-                # This handles the case where no products were compared
-                return JsonResponse({'status': 'محصولی مقایسه نشد', 'success': False})
-            
-            return JsonResponse({'results': 'محصولی مقایسه نشد', 'success': True})
-
-        except Exception as e:
-            return JsonResponse({'status': str(e), 'success': False})
+    return JsonResponse({'status': 'مقایسه انجام شد', 'success': True})
 
 @csrf_exempt
 def get_down_products_price_api(request):
