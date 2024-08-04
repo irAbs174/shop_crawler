@@ -154,6 +154,14 @@ def get_product_info(product_address, ua):
                         'price': price,
                         'status': 'موجود',
                     }
+        elif 'kifche' in product_address:
+            product_name = content_html.title.text
+            print('KIFCHE')
+            return {
+                'name': product_name,
+                'price': 0,
+                'status': 'موجود',
+            }
         elif 'snapshop' in product_address:
             pass
         elif 'digikala' in product_address:
