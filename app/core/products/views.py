@@ -20,6 +20,14 @@ import json
 import re
 
 @csrf_exempt
+def get_main_target(request):
+    main_target = TargetModel.objects.filter(targetType='main')
+    return JsonResponse({
+        'status': main_target,
+        'success': main_target,
+    })
+
+@csrf_exempt
 def get_count_data(request):
 
     all_target_count = TargetModel.objects.all().count()

@@ -122,6 +122,8 @@ def handle_buttons(message):
         bot.send_message(message.chat.id, "لیست کاربران ربات:")
         for user in USERNAMES:
             bot.send_message(message.chat.id, user)
+    elif message.text == 'سایت مرجع':
+        get_main_target(message)
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
@@ -184,6 +186,10 @@ def handle_product_management(message):
             stock = i['stock']
             url = i['url']
             bot.send_message(message.chat.id, f"کالا: {name} \n قیمت: {price} \n آدرس محصول {url} \n موجودی: {stock}")
+
+def get_main_target(message):
+    response = requests.post('http://0.0.0.0:8080/api/get_main_target').json()
+    bot.send_message(message.chat.id, f"سایت مرجع : {response['status']}")
 
 def get_reports(message):
     print("Fetching reports")
