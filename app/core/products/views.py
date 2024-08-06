@@ -42,9 +42,9 @@ def get_count_data(request):
     all_target_count = TargetModel.objects.all().count()
     main_target = TargetModel.objects.filter(targetType='main')[0].targetName
     all_products_count = P.objects.all().count()
-    down_products_count = P.objects.filter(product_status='down').count()
-    up_products_count = P.objects.filter(product_status='up').count()
-    equals_products_count = P.objects.filter(product_status='equals').count()
+    down_products_count = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:").count()
+    up_products_count = LogModel.objects.filter(logName="گزارش قیمت بالاتر:").count()
+    equals_products_count = LogModel.objects.filter(logName="گزارش هم قیمت:").count()
 
     context = {
         'all_target_count':all_target_count,
@@ -70,13 +70,14 @@ def get_chat_id(request):
 
 @csrf_exempt
 def newLogs(requests):
-    logs = LogModel.objects.all()
+    logs = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:", send_status=None)
     ctx = []
     for log in logs:
         if not log.send_status:
             item = {
                 'logName': log.logName,
                 'logType': log.logType,
+                'lastLog': log.lastLog,
             }
             ctx.append(item)
     
@@ -125,8 +126,14 @@ def single_comparison(request):
 
 @csrf_exempt
 def perform_comparison(request):
-    print("Starting perform_comparison")
+    # first clear log comparison logs
+    print('clear old comparison')
+    LogModel.objects.filter(logName="گزارش هم قیمت:").delete()
+    LogModel.objects.filter(logName="گزارش قیمت بالاتر:").delete()
+    LogModel.objects.filter(logName="گزارش زیر کردن قیمت:").delete()
 
+    # now comparison :
+    print("Starting perform_comparison")
     main_dic = P.objects.filter(product_type='normal')
     uss_dic = P.objects.filter(product_type='main')
     
@@ -152,20 +159,29 @@ def perform_comparison(request):
                         
                         if us_dic_price < main_product_price:
                             LogModel.objects.create(
-                                        logName="گزارش زیر کردن قیمت:",
+                                        logName="گزارش قیمت بالاتر:",
                                         logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
                                     )
-                            P.objects.filter(product_name=main_product.product_name).update(
-                                        product_status="down",
+                            P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
+                                        product_status="up",
                                     )
                         elif us_dic_price == main_product_price:
-                            P.objects.filter(product_name=main_product.product_name).update(
+                            LogModel.objects.create(
+                                        logName="گزارش هم قیمت:",
+                                        logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
+                                    )
+                            P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
                                 product_status="equals",
                             )
                         else:
-                            P.objects.filter(product_name=main_product.product_name).update(
-                                        product_status="up",
-                            )
+                            if main_product_price != 0:
+                                LogModel.objects.create(
+                                            logName="گزارش زیر کردن قیمت:",
+                                            logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
+                                        )
+                                P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
+                                            product_status="down",
+                                )
     except Exception as e:
         return JsonResponse({'status': 'در حال حاظر ربات در حال تکمیل اطلاعات است. لطفا کمی بعد دوباره تلاش کنید', 'success': False})
 
@@ -173,16 +189,13 @@ def perform_comparison(request):
 
 @csrf_exempt
 def get_down_products_price_api(request):
-    down_products = P.objects.filter(product_status='down')
+    down_products = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:")
     content = []
     if down_products:
         for i in down_products:
             content.append({
-                'name': i.product_name,
-                'price': i.product_price,
-                'stock': i.product_stock,
-                'url': i.product_url,
-                'parent': i.product_parent,
+                'logName': i.logName,
+                'logType': i.logType,
             })
     else:
         print("NOT DOWN PRODUCTS")
@@ -190,29 +203,23 @@ def get_down_products_price_api(request):
 
 @csrf_exempt
 def get_equals_products_price_api(request):
-    equals_products = P.objects.filter(product_status='equals')
+    equals_products = LogModel.objects.filter(logName="گزارش هم قیمت:")
     content = []
     for i in equals_products:
         content.append({
-            'name': i.product_name,
-            'price': i.product_price,
-            'stock': i.product_stock,
-            'url': i.product_url,
-            'parent': i.product_parent,
+            'logName': i.logName,
+            'logType': i.logType,
         })
     return JsonResponse({'status': content, 'success': True})
 
 @csrf_exempt
 def get_normal_products_price_api(request):
-    up_products = P.objects.filter(product_status='up')
+    up_products = LogModel.objects.filter(logName="گزارش قیمت بالاتر:")
     content = []
     for i in up_products:
         content.append({
-            'name': i.product_name,
-            'price': i.product_price,
-            'stock': i.product_stock,
-            'url': i.product_url,
-            'parent': i.product_parent,
+            'logName': i.logName,
+            'logType': i.logType,
         })
     return JsonResponse({'status': content, 'success': True})
 
