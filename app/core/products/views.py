@@ -37,7 +37,7 @@ def get_count_data(request):
         'equals_products_count':equals_products_count,
     }
 
-    JsonResponse({'status':context, 'success':True})
+    return JsonResponse({'status':context, 'success':True})
 
 @csrf_exempt
 def get_chat_id(request):

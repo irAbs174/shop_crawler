@@ -192,15 +192,17 @@ def get_reports(message):
         count = requests.post('http://0.0.0.0:8080/api/get_count_data').json()
         if response['success']:
             msg = f"""
+            \n
+            گزارش عملکرد :\n
             تعداد اهداف : {count['status']['all_target_count']} \n
             سایت مرجع : {count['status']['main_target']} \n
             تعداد محصول اسکن شده : {count['status']['all_products_count']} \n
             تعداد محصول زیر قیمت مرجع : {count['status']['down_products_count']} \n
             تعداد محصول هم قیمت مرجع: {count['status']['up_products_count']} \n
-            تعداد محصول بالاتر از قیمت مرجع: {count['status']['equals_products_count']} \n
+            تعداد محصول بالاتر از قیمت مرجع: {count['status']['equals_products_count']} \n\b
             """
             for log in response['status']:
-                msg += f"{escape(log['name'])}: {log['logType']}\n\n\n"
+                msg += f"\n{escape(log['name'])}: {log['logType']}\n_____________________________ \n"
             bot.send_message(message.chat.id, msg)
         else:
             bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
