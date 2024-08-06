@@ -21,7 +21,7 @@ import re
 
 @csrf_exempt
 def get_main_target(request):
-    main_target = TargetModel.objects.filter(targetType='main')
+    main_target = TargetModel.objects.filter(targetType='main')[0].targetName
     return JsonResponse({
         'status': main_target,
         'success': main_target,
