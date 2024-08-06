@@ -12,6 +12,7 @@ from .models import (
     BotUsers,
 )
 from core.sec import kavenegar_api_key
+from khayyam import JalaliDatetime
 from django.db.models import Q
 from kavenegar import *
 import random
@@ -266,7 +267,8 @@ def get_logs_api(request):
     for i in logsM:
         content = {
             'name': i.logName,
-            'logType': i.logType
+            'logType': i.logType,
+            'lastLog': JalaliDatetime(i.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
         }
         logs.append(content)
     
