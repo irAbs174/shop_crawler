@@ -23,8 +23,13 @@ import re
 def get_target_products_count(request):
     targetUrl = request.POST.get('url')
     all_target_products_count = P.objects.filter(product_parent=targetUrl).count()
+    stock_count = P.objects.filter(product_parent=targetUrl, product_stock='موجود').count()
+    out_stock_count = P.objects.filter(product_parent=targetUrl, product_stock='ناموجود').count()
     return JsonResponse({
-        'status': all_target_products_count,
+        'status': 200,
+        'all_target_products_count':all_target_products_count,
+        'stock_count':stock_count,
+        'out_stock_count':out_stock_count,
         'success': True
     })
 
@@ -77,7 +82,7 @@ def newLogs(requests):
             item = {
                 'logName': log.logName,
                 'logType': log.logType,
-                'lastLog': log.lastLog,
+                'lastLog': JalaliDatetime(log.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
             }
             ctx.append(item)
     
@@ -196,6 +201,7 @@ def get_down_products_price_api(request):
             content.append({
                 'logName': i.logName,
                 'logType': i.logType,
+                'lastLog': JalaliDatetime(i.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
             })
     else:
         print("NOT DOWN PRODUCTS")
@@ -209,6 +215,7 @@ def get_equals_products_price_api(request):
         content.append({
             'logName': i.logName,
             'logType': i.logType,
+            'lastLog': JalaliDatetime(i.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
         })
     return JsonResponse({'status': content, 'success': True})
 
@@ -220,6 +227,7 @@ def get_normal_products_price_api(request):
         content.append({
             'logName': i.logName,
             'logType': i.logType,
+            'lastLog': JalaliDatetime(i.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
         })
     return JsonResponse({'status': content, 'success': True})
 

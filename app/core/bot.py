@@ -18,6 +18,7 @@ def check_api_and_notify():
             for j in response['status']:
                 logName = j['logName']
                 logType = j['logType']
+                lastLog = j['lastLog']
                 res = requests.post('http://0.0.0.0:8080/api/get_chat_id').json()
                 for i in res['status']:
                     print(res['status'])
@@ -27,7 +28,8 @@ def check_api_and_notify():
                         msg = f"""
                         گزارش جدید خزنده‌ !
                         {logName} \n
-                        {logType}
+                        {logType} \n
+                        {lastLog}
                         """
                         bot.send_message(int(userId),msg)
         else:
@@ -185,7 +187,7 @@ def get_target_api(message):
     response = requests.post('http://0.0.0.0:8080/api/get_target_api').json()
     for i in response['status']:
         count = requests.post('http://0.0.0.0:8080/api/get_target_products_count', data={'url': i['url']}).json()
-        bot.send_message(message.chat.id, f"نام سایت: {i['name']} \n آدرس: {i['url']} \n تعداد محصولات: {count['status']}")
+        bot.send_message(message.chat.id, f"نام سایت: {i['name']} \n آدرس: {i['url']} \n تعداد محصولات: {count['all_target_products_count']} تعداد محصولات موجود:‌ {count['stock_count']}, تعداد محصولات ناموجود: {count['out_stock_count']}")
 
 def get_reports(message):
     try:
@@ -219,9 +221,11 @@ def get_down_products(message):
             for i in res['status']:
                 logName = i['logName']
                 logType = i['logType']
+                lastLog = i['lastLog']
                 msg = f'''
                 {logName} \n
-                {logType}
+                {logType} \n
+                {lastLog}
                 '''
                 bot.send_message(message.chat.id, msg)
         else:
@@ -238,9 +242,11 @@ def get_equals_products(message):
             for i in res['status']:
                 logName = i['logName']
                 logType = i['logType']
+                lastLog = i['lastLog']
                 msg = f'''
                 {logName} \n
-                {logType}
+                {logType} \n
+                {lastLog}
                 '''
                 bot.send_message(message.chat.id, msg)
         else:
@@ -257,9 +263,11 @@ def get_up_products(message):
             for i in res['status']:
                 logName = i['logName']
                 logType = i['logType']
+                lastLog = i['lastLog']
                 msg = f'''
                 {logName} \n
-                {logType}
+                {logType} \n
+                {lastLog}
                 '''
                 bot.send_message(message.chat.id, msg)
         else:
