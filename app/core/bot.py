@@ -202,7 +202,7 @@ def get_reports(message):
             تعداد محصول بالاتر از قیمت مرجع: {count['status']['equals_products_count']} \n\b
             """
             for log in response['status']:
-                msg += f"\n{escape(log['name'])}: {log['logType']}\n_____________________________ \n"
+                msg += f"\n{escape(log['name'])} {log['logType']}\n_____________________________ \n"
             bot.send_message(message.chat.id, msg)
         else:
             bot.send_message(message.chat.id, "خطایی در دریافت گزارشات رخ داده است.")
