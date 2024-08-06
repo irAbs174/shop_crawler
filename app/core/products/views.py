@@ -20,6 +20,15 @@ import json
 import re
 
 @csrf_exempt
+def get_target_products_count(request):
+    targetUrl = request.POST.get('url')
+    all_target_products_count = P.objects.filter(product_parent=targetUrl).count()
+    return JsonResponse({
+        'status': all_target_products_count,
+        'success': True
+    })
+
+@csrf_exempt
 def get_main_target(request):
     main_target = TargetModel.objects.filter(targetType='main')[0].targetName
     return JsonResponse({

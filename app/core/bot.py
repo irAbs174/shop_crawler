@@ -112,7 +112,7 @@ def handle_buttons(message):
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
         bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
     elif message.text == 'اهداف':
-        new_buttons = ['افزودن هدف', 'مشاهده اهداف', 'سایت مرجع', 'بازگشت']
+        new_buttons = ['مشاهده اهداف', 'سایت مرجع', 'بازگشت']
         new_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         new_markup.add(*[types.KeyboardButton(button) for button in new_buttons])
         bot.send_message(message.chat.id, "یک گزینه را انتخاب کنید:", reply_markup=new_markup)
@@ -124,6 +124,8 @@ def handle_buttons(message):
             bot.send_message(message.chat.id, user)
     elif message.text == 'سایت مرجع':
         get_main_target(message)
+    elif message.text == 'مشاهده اهداف':
+        get_target_api(message)
     elif message.text == 'بازگشت':
         main_menu(message)
     else:
@@ -190,6 +192,12 @@ def handle_product_management(message):
 def get_main_target(message):
     response = requests.post('http://0.0.0.0:8080/api/get_main_target').json()
     bot.send_message(message.chat.id, f"سایت مرجع : {response['status']}")
+
+def get_target_api(message):
+    response = requests.post('http://0.0.0.0:8080/api/get_target_api').json()
+    for i in response['status']:
+        count = requests.post('http://0.0.0.0:8080/api/get_target_products_count', data={'url': i['url']}).json()
+        bot.send_message(message.chat.id, f"نام سایت: {i['name']} \n آدرس: {i['url']} \n تعداد محصولات: {count['status']}")
 
 def get_reports(message):
     print("Fetching reports")
