@@ -19,6 +19,27 @@ import json
 import re
 
 @csrf_exempt
+def get_count_data(request):
+
+    all_target_count = TargetModel.objects.all().count()
+    main_target = TargetModel.objects.filter(targetType='main')[0].targetName
+    all_products_count = P.objects.all().count()
+    down_products_count = P.objects.filter(product_status='down').count()
+    up_products_count = P.objects.filter(product_status='up').count()
+    equals_products_count = P.objects.filter(product_status='equals').count()
+
+    context = {
+        'all_target_count':all_target_count,
+        'main_target':main_target,
+        'all_products_count': all_products_count,
+        'down_products_count': down_products_count,
+        'up_products_count':up_products_count,
+        'equals_products_count':equals_products_count,
+    }
+
+    JsonResponse({'status':context, 'success':True})
+
+@csrf_exempt
 def get_chat_id(request):
     ctx = []
     for i in BotUsers.objects.all():

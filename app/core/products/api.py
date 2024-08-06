@@ -14,7 +14,8 @@ from .views import (
     register,
     single_comparison,
     newLogs,
-    get_chat_id
+    get_chat_id,
+    get_count_data
 )
 
 urlpatterns = [
@@ -32,5 +33,6 @@ urlpatterns = [
     path('perform_comparison', perform_comparison),
     path('single_comparison', single_comparison),
     path('newLogs', newLogs),
-    path('get_chat_id', get_chat_id)
+    path('get_chat_id', get_chat_id),
+    path('get_count_data', get_count_data)
 ]
