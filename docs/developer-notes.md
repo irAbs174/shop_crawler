@@ -1,7 +1,7 @@
 Setup sec, local and stream.setup
 ____________________________________________________________________________
 # PYTHON3 REQUIREMENTS
-pip3 install pip3 install --upgrade pip && pip install django bs4 sockets requests aiohttp kavenegar fake-useragent aiogram openpyxl khayyam 
+pip3 install --upgrade pip && pip install django django-cors-headers bs4 sockets requests aiohttp kavenegar fake-useragent aiogram openpyxl khayyam
 ____________________________________________________________________________
 # HOW USE DJANGO OUT SIDE DJANGO ?!
 import django
