@@ -5,9 +5,10 @@ from html import escape
 import schedule
 from threading import Thread
 import time
+from core.sec import TELEGRAM_BOT_API_TOKEN
 
 # Bot token
-TOKEN = "7475255594:AAHW5qXvU9h9LaOHfaZgSRH5618ZhPBLuQQ"
+TOKEN = 
 bot = telebot.TeleBot(TOKEN)
 
 def check_api_and_notify():
