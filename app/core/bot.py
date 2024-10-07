@@ -5,7 +5,7 @@ from html import escape
 import schedule
 from threading import Thread
 import time
-from core.sec import TELEGRAM_BOT_API_TOKEN
+from core.sec import *
 
 # Bot token
 TOKEN = 
@@ -13,14 +13,14 @@ bot = telebot.TeleBot(TOKEN)
 
 def check_api_and_notify():
     try:
-        response = requests.post('http://0.0.0.0:8080/api/newLogs').json()
+        response = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/newLogs').json()
         if response['status'] != ['']:
             print(response['status'])
             for j in response['status']:
                 logName = j['logName']
                 logType = j['logType']
                 lastLog = j['lastLog']
-                res = requests.post('http://0.0.0.0:8080/api/get_chat_id').json()
+                res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_chat_id').json()
                 for i in res['status']:
                     print(res['status'])
                     print(i)
@@ -80,7 +80,7 @@ def send_welcome(message):
         }
         print(user)
         try:
-            response = requests.post("http://0.0.0.0:8080/api/register", data=user)
+            response = requests.post(f"http://{DJANGO_HOST}:{DJANGO_PORT}/api/register", data=user)
             response_data = response.json()
             print(f"Registration response: {response_data}")
         except requests.exceptions.RequestException as e:
@@ -154,7 +154,7 @@ def handle_product_management(message):
 
 def get_preform_comparison(message):
     try:
-        res = requests.post('http://0.0.0.0:8080/api/perform_comparison',{}).json()
+        res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/perform_comparison',{}).json()
         progress_message = bot.send_message(message.chat.id, "در حال مقایسه محصولات لطفاً صبر کنید...")
         bot.send_message(message.chat.id, res['status'])
     except Exception as e:
@@ -162,7 +162,7 @@ def get_preform_comparison(message):
 
 def search(message):
     product = message.text
-    res = requests.post('http://0.0.0.0:8080/api/single_comparison', data={'product_name' : product}).json()
+    res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/single_comparison', data={'product_name' : product}).json()
     for i in res['status']:
         name = i['name']
         price = i['price']
@@ -181,19 +181,19 @@ def get_export_products(message):
         bot.send_message(message.chat.id, "خطا در ارسال فایل: فایل پیدا نشد.")
 
 def get_main_target(message):
-    response = requests.post('http://0.0.0.0:8080/api/get_main_target').json()
+    response = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_main_target').json()
     bot.send_message(message.chat.id, f"سایت مرجع : {response['status']}")
 
 def get_target_api(message):
-    response = requests.post('http://0.0.0.0:8080/api/get_target_api').json()
+    response = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_target_api').json()
     for i in response['status']:
-        count = requests.post('http://0.0.0.0:8080/api/get_target_products_count', data={'url': i['url']}).json()
+        count = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_target_products_count', data={'url': i['url']}).json()
         bot.send_message(message.chat.id, f"نام سایت: {i['name']} \n آدرس: {i['url']} \n تعداد محصولات: {count['all_target_products_count']} تعداد محصولات موجود:‌ {count['stock_count']}, تعداد محصولات ناموجود: {count['out_stock_count']}")
 
 def get_reports(message):
     try:
-        response = requests.post('http://0.0.0.0:8080/api/get_logs_api').json()
-        count = requests.post('http://0.0.0.0:8080/api/get_count_data').json()
+        response = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_logs_api').json()
+        count = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_count_data').json()
         if response['success']:
             msg = f"""
             \n
@@ -216,7 +216,7 @@ def get_reports(message):
 
 def get_down_products(message):
     try:
-        res = requests.post('http://0.0.0.0:8080/api/get_down_products_price_api').json()
+        res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_down_products_price_api').json()
         print(f"Received down products: {res}")
         if res['status']:
             for i in res['status']:
@@ -238,7 +238,7 @@ def get_down_products(message):
 def get_equals_products(message):
     print("Fetching equals products")
     try:
-        res = requests.post('http://0.0.0.0:8080/api/get_equals_products_price_api').json()
+        res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_equals_products_price_api').json()
         if res['status']:
             for i in res['status']:
                 logName = i['logName']
@@ -259,7 +259,7 @@ def get_equals_products(message):
 def get_up_products(message):
     print("Fetching us products")
     try:
-        res = requests.post('http://0.0.0.0:8080/api/get_normal_products_price_api').json()
+        res = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/get_normal_products_price_api').json()
         if res['status']:
             for i in res['status']:
                 logName = i['logName']
