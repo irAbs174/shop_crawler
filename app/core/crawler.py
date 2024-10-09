@@ -1,8 +1,9 @@
+from fake_useragent import UserAgent
+from colorama import Fore
 import http.server
 import socketserver
 import threading
 import time
-from fake_useragent import UserAgent
 import requests
 import django
 import sys
@@ -47,7 +48,7 @@ def handle_job(ua):
     targets = TargetModel.objects.all()
     for target in targets:
                 
-        """Process a single job."""
+        print(Fore.WHITE, "Processing job ...")
         jobName = target.targetName
         jobArg = target.targetUrl
         logType = f'{jobName}=>{jobArg}'
@@ -83,9 +84,9 @@ def handle_job(ua):
                     print(f'=>{i} Exist!')
                 else:
                     Product.objects.filter(product_parent=jobArg, product_url=i).update(
-                        product_name=info['name'],
+                        product_name=f"{info['name']} + {info['status']['color']}",
                         product_price=info['price'],
-                        product_stock=info['status'],
+                        product_stock=info['status']['quantity'],
                     )
                     print(f'save product detail {info}')
         else:
@@ -144,7 +145,7 @@ def perform_export(jobName, jobArg):
 
 def perform_crawl():
     ua = UserAgent()
-    """Perform the crawling job in an infinite loop."""
+    print(Fore.BLUE, "=> Perform the crawling job in an infinite loop.")
     while True:
         try:
             handle_job(ua)
@@ -157,9 +158,9 @@ def perform_crawl():
             log_error(str(e))
 
 def start_server():
-    """Start the HTTP server."""
+    print(Fore.RED, "Starting the HTTP server... ")
     with socketserver.TCPServer(("", SERVER_PORT), GetHandler) as httpd:
-        print(f"Serving on port {SERVER_PORT}")
+        print(Fore.YELLOW, f"Serving on port {SERVER_PORT}")
         httpd.serve_forever()
 
 # Run the server in a separate thread
