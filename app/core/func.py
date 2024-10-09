@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from colorama import Fore
 import requests as R
 import logging
 import time
@@ -24,6 +25,7 @@ def crawler(target, headers, retries=3):
     return None
 
 def get_products_sitemap(soup):
+    print(Fore.YELLOW)
     if soup is None:
         return []
     
@@ -34,6 +36,7 @@ def get_products_sitemap(soup):
     return product_sitemaps
 
 def get_products_list(products_sitemap_list, ua):
+    print(Fore.RED)
     products_list = []
     headers = {'User-Agent': ua.random}
     for i in products_sitemap_list:
@@ -46,18 +49,17 @@ def get_products_list(products_sitemap_list, ua):
     return products_list
 
 def get_product_info(product_address, ua):
-
+    print(Fore.GREEN)
     content_html = bs4(R.get(product_address).text, 'html.parser')
-
+    #options = Options()
+    #options.add_argument('--headless')
+    #options.add_argument('--no-sandbox')
+    #options.add_argument('--disable-dev-shm-usage')
+    #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver = webdriver.Chrome()
+    driver.get(product_address)
     try:
-        if 'buykif' in product_address:
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-            driver = webdriver.Chrome()
-            driver.get(product_address)
+        if 'buy' in product_address:
             soup = bs4(driver.page_source, "html.parser")
             variations_data = soup.find('form', {'class': 'variations_form cart'})['data-product_variations']
             variations_data = variations_data.replace('&quot;', '"').replace('\\/', '/')
@@ -91,14 +93,11 @@ def get_product_info(product_address, ua):
                     "status": color_quantity
                     }
 
-        elif '123kif' in product_address:
-
-            if content_html is None:
-                return None
-
-            product_name = content_html.title.text
+        elif '123' in product_address:
+            product_name = driver.title
+            content_html = bs4(driver.page_source, "html.parser")
             stock = content_html.select('p.out-of-stock')
-            
+
             if stock == []:
                 print("MOJOD")
                 # Extract and convert price
@@ -121,14 +120,14 @@ def get_product_info(product_address, ua):
                 return {
                     'name': product_name,
                     'price': number,
-                    'status': 'موجود',
+                    'status' : [{"color": "", "quantity":"موجود"}],
                 }
             else:
                 print("NAMOJOD")
                 return {
                     'name': product_name,
                     'price': 0,
-                    'status': 'ناموجود',
+                    'status' : [{"color": "", "quantity":"ناموجود"}],
                     }
         elif 'kifche' in product_address:
             product_name = content_html.title.text
