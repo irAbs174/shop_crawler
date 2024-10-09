@@ -25,7 +25,7 @@ def crawler(target, headers, retries=3):
 
 def scroll_and_load(driver, pause_time=2):
     last_height = driver.execute_script("return document.body.scrollHeight")
-
+    
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(pause_time)
@@ -38,7 +38,7 @@ def scroll_and_load(driver, pause_time=2):
 def get_products_sitemap(soup):
     if soup is None:
         return []
-
+    
     product_sitemaps = []
     for i in soup.select('sitemap'):
         if 'product-sitemap' in i.loc.text:
@@ -107,7 +107,7 @@ def get_product_info(product_address, ua):
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
-            driver = driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
             driver.get(product_address)
             scroll_and_load(driver)
             btn = driver.find_elements(By.XPATH, "//button[contains(@class, 'single_add_to_cart_button') and @disabled]")

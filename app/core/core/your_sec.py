@@ -1,3 +1,5 @@
-SECRET_KEY = ''
-
-kavenegar_api_key = ''
+DJANGO_HOST="0.0.0.0"
+DJANGO_PORT=8080
+SECRET_KEY=""
+kavenegar_api_key=""
+TELEGRAM_BOT_API_TOKEN=""

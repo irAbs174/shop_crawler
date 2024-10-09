@@ -8,7 +8,7 @@ import time
 from core.sec import *
 
 # Bot token
-TOKEN = 
+TOKEN = TELEGRAM_BOT_TOKEN 
 bot = telebot.TeleBot(TOKEN)
 
 def check_api_and_notify():
