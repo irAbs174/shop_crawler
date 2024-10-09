@@ -49,48 +49,8 @@ def get_product_info(product_address, ua):
 
     content_html = bs4(R.get(product_address).text, 'html.parser')
 
-    stock = content_html.select('p.out-of-stock')
-
     try:
-        if '123kif' in product_address:
-
-            if content_html is None:
-                return None
-
-            product_name = content_html.title.text
-
-            if stock == []:
-                print("MOJOD")
-                # Extract and convert price
-                price_element = content_html.select('bdi')[1].text
-                print(price_element)
-                persian_number = price_element.split('\xa0')[0]
-                print(persian_number)
-                # Translation table: Persian digits to Arabic numerals
-                translation_table = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
-                print(translation_table)
-                # Convert Persian digits to Arabic numerals
-                arabic_number = persian_number.translate(translation_table)
-                print(arabic_number)
-                # Remove any thousand separators
-                arabic_number = arabic_number.replace(',', '')
-                print(arabic_number)
-                # Convert to integer
-                number = int(arabic_number)
-                
-                return {
-                    'name': product_name,
-                    'price': number,
-                    'status': 'موجود',
-                }
-            else:
-                print("NAMOJOD")
-                return {
-                    'name': product_name,
-                    'price': 0,
-                    'status': 'ناموجود',
-                    }
-        elif 'buykif' in product_address:
+        if 'buykif' in product_address:
             options = Options()
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
@@ -131,14 +91,52 @@ def get_product_info(product_address, ua):
                     "status": color_quantity
                     }
 
+        elif '123kif' in product_address:
 
+            if content_html is None:
+                return None
+
+            product_name = content_html.title.text
+            stock = content_html.select('p.out-of-stock')
+            
+            if stock == []:
+                print("MOJOD")
+                # Extract and convert price
+                price_element = content_html.select('bdi')[1].text
+                print(price_element)
+                persian_number = price_element.split('\xa0')[0]
+                print(persian_number)
+                # Translation table: Persian digits to Arabic numerals
+                translation_table = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
+                print(translation_table)
+                # Convert Persian digits to Arabic numerals
+                arabic_number = persian_number.translate(translation_table)
+                print(arabic_number)
+                # Remove any thousand separators
+                arabic_number = arabic_number.replace(',', '')
+                print(arabic_number)
+                # Convert to integer
+                number = int(arabic_number)
+                
+                return {
+                    'name': product_name,
+                    'price': number,
+                    'status': 'موجود',
+                }
+            else:
+                print("NAMOJOD")
+                return {
+                    'name': product_name,
+                    'price': 0,
+                    'status': 'ناموجود',
+                    }
         elif 'kifche' in product_address:
             product_name = content_html.title.text
             print('KIFCHE')
             return {
                 'name': product_name,
                 'price': 0,
-                'status': 'موجود',
+                'status': [{"color": "", "quantity":""}],
             }
         elif 'snapshop' in product_address:
             pass
