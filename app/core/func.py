@@ -23,18 +23,6 @@ def crawler(target, headers, retries=3):
             time.sleep(5)  # Wait for a few seconds before retrying
     return None
 
-def scroll_and_load(driver, pause_time=2):
-    last_height = driver.execute_script("return document.body.scrollHeight")
-    
-    while True:
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(pause_time)
-        
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
-
 def get_products_sitemap(soup):
     if soup is None:
         return []
@@ -107,53 +95,43 @@ def get_product_info(product_address, ua):
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver = webdriver.Chrome()
             driver.get(product_address)
-            scroll_and_load(driver)
-            btn = driver.find_elements(By.XPATH, "//button[contains(@class, 'single_add_to_cart_button') and @disabled]")
-            driver.close()
-            print(f'btn +>>> {btn}')
-            if btn == []:
-                is_available = False
-            else:
-                is_available = True
-
-            headers = {'User-Agent': ua.random}
-            content_html = crawler(product_address, headers=headers)
-        
-            if content_html is None:
-                return None
-
-            product_name = content_html.title.text
-            if is_available:
-                return {
-                    'name': product_name,
-                    'price': 0,
-                    'status': 'ناموجود',
+            soup = bs4(driver.page_source, "html.parser")
+            variations_data = soup.find('form', {'class': 'variations_form cart'})['data-product_variations']
+            variations_data = variations_data.replace('&quot;', '"').replace('\\/', '/')
+            variations = variations_data.split('},{')
+            color_quantity = []
+            for variation in variations:
+                variation = variation.replace('{', '').replace('}', '')
+                color_start = variation.find('attribute_pa_color') + len('attribute_pa_color":"')
+                color_end = variation.find('"', color_start)
+                color = variation[color_start:color_end]
+                availability_start = variation.find('availability_html') + len('availability_html":"')
+                availability_end = variation.find('<', availability_start)
+                availability = variation[availability_start:availability_end]
+                price_start = variation.find('display_price') + len('display_price":')
+                price_end = variation.find(',', price_start)
+                price = variation[price_start:price_end]
+                regular_price_start = variation.find('display_regular_price') + len('display_regular_price":')
+                regular_price_end = variation.find(',', regular_price_start)
+                regular_price = variation[regular_price_start:regular_price_end]
+                max_qty_start = variation.find('max_qty') + len('max_qty":')
+                max_qty_end = variation.find(',', max_qty_start)
+                max_qty = variation[max_qty_start:max_qty_end]
+                print(f"ﺮﻨﮔ: {color}, ﻡﻮﺟﻭﺪﯾ: {availability.strip()}, ﺖﻋﺩﺍﺩ: {max_qty}, ﻖﯿﻤﺗ ﻒﻌﻠﯾ: {price} ﺕﻮﻣﺎﻧ، ﻖﯿﻤﺗ ﺎﺼﻠﯾ: {regular_price} ﺕﻮﻣﺎﻧ")
+                color_quantity.append({
+                    'color':color,
+                    'quantity' : max_qty
+                    })
+            return {
+                    "name": driver.title,
+                    "price": regular_price,
+                    "status": color_quantity
                     }
-            else:
-                if stock != []:
-                    if stock[0].text == 'متاسفانه این محصول در حال حاضر موجود نمی باشد. می توانید از لیست پایین همین برگه، محصولات مشابه آن را مشاهده کنید.':
-                        return {
-                            'name': product_name,
-                            'price': 0,
-                            'status': 'ناموجود',
-                            }
-                else:
-                    # Extract and convert price
-                    price_element = content_html.find(class_='woocommerce-Price-amount amount')
-                    price_text = price_element.text
-                    price_digits = re.sub(r'[^\d]', '', price_text)
-                    if price_digits.isdigit():
-                        price = int(price_digits) * 4
-                    else:
-                        price = '0'  # Price not found or invalid
-                    
-                    return {
-                        'name': product_name,
-                        'price': price,
-                        'status': 'موجود',
-                    }
+
+
         elif 'kifche' in product_address:
             product_name = content_html.title.text
             print('KIFCHE')
