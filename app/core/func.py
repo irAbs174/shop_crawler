@@ -88,7 +88,7 @@ def get_product_info(product_address, ua):
                 
                 color_quantity.append({
                     'color':color,
-                    'quantity' : max_qty if max_qty != "" else "ناموجود"
+                    'quantity' : "ناموجود" if max_qty == '""' else max_qty
                     })
             payload =  {
                     "name": driver.title,
