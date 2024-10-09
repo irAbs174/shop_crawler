@@ -65,6 +65,7 @@ def get_product_info(product_address, ua):
             variations_data = variations_data.replace('&quot;', '"').replace('\\/', '/')
             variations = variations_data.split('},{')
             color_quantity = []
+            all_unavailable = True
             for variation in variations:
                 variation = variation.replace('{', '').replace('}', '')
                 color_start = variation.find('attribute_pa_color') + len('attribute_pa_color":"')
@@ -82,16 +83,20 @@ def get_product_info(product_address, ua):
                 max_qty_start = variation.find('max_qty') + len('max_qty":')
                 max_qty_end = variation.find(',', max_qty_start)
                 max_qty = variation[max_qty_start:max_qty_end]
-                print(f"ﺮﻨﮔ: {color}, ﻡﻮﺟﻭﺪﯾ: {availability.strip()}, ﺖﻋﺩﺍﺩ: {max_qty}, ﻖﯿﻤﺗ ﻒﻌﻠﯾ: {price} ﺕﻮﻣﺎﻧ، ﻖﯿﻤﺗ ﺎﺼﻠﯾ: {regular_price} ﺕﻮﻣﺎﻧ")
+                if max_qty != "":
+                    all_unavailable = False
+                
                 color_quantity.append({
                     'color':color,
-                    'quantity' : max_qty
+                    'quantity' : max_qty if max_qty != "" else "ناموجود"
                     })
-            return {
+            payload =  {
                     "name": driver.title,
                     "price": regular_price,
-                    "status": color_quantity
+                    "status": {'color':'', 'quantity':"ناموجود" if all_unavailable else color_quantity}
                     }
+            print(payload)
+            return payload
 
         elif '123' in product_address:
             product_name = driver.title
@@ -99,21 +104,14 @@ def get_product_info(product_address, ua):
             stock = content_html.select('p.out-of-stock')
 
             if stock == []:
-                print("MOJOD")
-                # Extract and convert price
                 price_element = content_html.select('bdi')[1].text
-                print(price_element)
                 persian_number = price_element.split('\xa0')[0]
-                print(persian_number)
                 # Translation table: Persian digits to Arabic numerals
                 translation_table = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
-                print(translation_table)
                 # Convert Persian digits to Arabic numerals
                 arabic_number = persian_number.translate(translation_table)
-                print(arabic_number)
                 # Remove any thousand separators
                 arabic_number = arabic_number.replace(',', '')
-                print(arabic_number)
                 # Convert to integer
                 number = int(arabic_number)
                 
@@ -123,12 +121,12 @@ def get_product_info(product_address, ua):
                     'status' : [{"color": "", "quantity":"موجود"}],
                 }
             else:
-                print("NAMOJOD")
                 return {
                     'name': product_name,
                     'price': 0,
                     'status' : [{"color": "", "quantity":"ناموجود"}],
                     }
+
         elif 'kifche' in product_address:
             product_name = content_html.title.text
             print('KIFCHE')
