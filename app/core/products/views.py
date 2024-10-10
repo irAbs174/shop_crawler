@@ -234,7 +234,10 @@ def get_normal_products_price_api(request):
 @csrf_exempt
 def get_products_api(request):
     jobArg = request.POST.get('jobArg')
-    products = P.objects.filter(product_parent=jobArg)
+    if jobArg:
+        products = P.objects.filter(product_parent=jobArg)
+    else:
+        products = P.objects.all()
     count = products.count()
     content = []
     for i in products:

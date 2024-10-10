@@ -8,7 +8,7 @@ import time
 from core.sec import *
 
 # Bot token
-TOKEN = TELEGRAM_BOT_TOKEN 
+TOKEN = TELEGRAM_BOT_API_TOKEN 
 bot = telebot.TeleBot(TOKEN)
 
 def check_api_and_notify():
@@ -169,14 +169,12 @@ def search(message):
         stock = i['stock']
         url = i['url']
         bot.send_message(message.chat.id, f"کالا: {name} \n قیمت: {price} \n آدرس محصول {url} \n موجودی: {stock}")
-
+        
 def get_export_products(message):
     progress_message = bot.send_message(message.chat.id, "در حال تولید فایل خروجی لطفاً صبر کنید...")
     try:
-        with open('Products_Export=>buykif.csv', 'rb') as file:
-            bot.send_document(message.chat.id, file, caption="لیست محصولات بای کیف")
-        with open('Products_Export=>123kif.csv', 'rb') as file:
-            bot.send_document(message.chat.id, file, caption="لیست محصولات یک دو سه کیف")
+        with open('Products_Export.csv', 'rb') as file:
+            bot.send_document(message.chat.id, file, caption="لیست محصولات")
     except FileNotFoundError as e:
         bot.send_message(message.chat.id, "خطا در ارسال فایل: فایل پیدا نشد.")
 

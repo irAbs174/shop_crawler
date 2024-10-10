@@ -109,7 +109,7 @@ def perform_comparison(jobArg):
     print(response)
 
 def perform_export(jobName, jobArg):
-    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'وضعیت', 'موجودی', 'آدرس محصول']
+    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'موجودی', 'آدرس محصول']
     rows = []
     response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={'jobArg':jobArg})
     for i in response.json()['status']:

@@ -1,55 +1,61 @@
+import csv
+from colorama import Fore
 import requests
-from openpyxl import Workbook
-import http.server
-import socketserver
-import threading
 import time
 
-# Create a new Workbook
-wb = Workbook()
+def clean_stock_data(stock_data):
+    """Cleans the 'موجودی' column data."""
+    # Initialize a list to hold cleaned stock entries
+    cleaned_stock = []
+    
+    # Parse each stock item
+    for stock_item in stock_data.get('quantity', []):
+        color = stock_item.get('color', '')
+        quantity = stock_item.get('quantity', '')
+        if color and quantity:
+            # Format each entry as 'color: quantity'
+            cleaned_stock.append(f"{color}: {quantity}")
+    
+    # Join all cleaned entries into a single string, separated by commas
+    return ', '.join(cleaned_stock)
 
-# Select the active worksheet
-ws = wb.active
-
-def export_products():
+while True:
+    print(Fore.RED, "START EXPORT")
+    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'موجودی', 'آدرس محصول']
+    rows = []
+    
     response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={})
-    data = [[
-        'فروشگاه',
-        'نام کالا',
-        'قیمت کالا',
-        'وضعیت',
-        'موجودی',
-        'صفحه محصول',
-    ]]
-    for i in response.json()['status']:
-        if i['price'] == '0':
-            stock = 'ناموجود'
-        elif i['stock'] == 'ناموجود':
-            stock = 'ناموجود'
-        else:
-            stock = 'موجود'
-        data.append([
-            i['parent'],
-            i['name'],
-            i['price'],
-            i['status'],
-            stock,
-            i['url'],
-        ])
-
-                    # Write data to the worksheet
-        for row in data:
-            print(row)
-            ws.append(row)
+    if response.json().get('status'):
+        for product in response.json()['status']:
+            print(Fore.BLUE, product)
+            
+            # Clean the 'موجودی' data before adding it to the rows
+            cleaned_stock = clean_stock_data(product.get('stock', {}))
+            
+            rows.append([
+                product['parent'],
+                f"{product['name']}",
+                product['price'],
+                cleaned_stock,  # Insert the cleaned stock data here
+                product['url'],
+            ])
         
-        # Save the Workbook to a file
-        file_path = 'products1.xlsx'
-        wb.save(file_path)
+    # Name of the CSV file
+    filename = f"Products_Export.csv"
 
-    for i in range(600):
+    with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+        # Creating a CSV writer object
+        csvwriter = csv.writer(csvfile)
+
+        # Writing the fields
+        csvwriter.writerow(fields)
+
+        # Writing the data rows
+        csvwriter.writerows(rows)
+
+    print(Fore.GREEN, 'EXPORTED SUCCESSFULLY!')
+    
+    # Sleep for 60 seconds
+    for i in range(60):
+        print(Fore.YELLOW, f"Sleeping ... {i} second(s)!\n")
         time.sleep(1)
-        print(f'=> {i} secend ...')
-
-if __name__ == "__main__":
-    # Start the export_products function in a separate thread
-    export_products()
