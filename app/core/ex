@@ -3,9 +3,9 @@
 while true
 do
     clear
-    rm /var/sc/shop_crawler/app/core/export.csv
+    rm Export_All.csv
 
     python3 export.py
     echo "--- SLEEPING ... ---"
-    sleep 20
+    sleep 15
 done

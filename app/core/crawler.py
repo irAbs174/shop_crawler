@@ -1,11 +1,12 @@
 from fake_useragent import UserAgent
-from colorama import Fore
+from colorama import Fore, Style
 import http.server
 import socketserver
 import threading
 import time
 import requests
 import django
+import json
 import sys
 import csv
 import os
@@ -81,12 +82,36 @@ def handle_job(ua):
             if Product.objects.filter(product_parent=jobArg, product_url=url,  product_price=info['price']).exists():
                 print(Fore.YELLOW ,f'NOT SAVE : Product {info}  in parent shop with prev price us exist! ')
             else:
-                Product.objects.filter(product_parent=jobArg, product_url=i).update(
-                    product_name=f"{info['name']} + {info['status']['color']}",
-                    product_price=info['price'],
-                    product_stock=info['status']['quantity'],
-                )
-                print(Fore.RED ,f'SAVED: NEW PRODUCT CHANGES\n => {info} <=')
+                try:
+                    res = requests.post('http://0.0.0.0:8080/api/store_products', {
+                        'jobArg': jobArg,
+                        'payload': json.dumps(info),
+                        'url': i
+                    }).json()
+                    # Write Changes to csv
+                    rows = []
+                    stock_json = info['status']['quantity']
+                    for variant in stock_json:
+                        rows.append([
+                            f'{jobArg}',
+                            f"{info['name']} - {variant.get('color', 'N/A')}",
+                            info['price'],
+                            variant.get('quantity', 'N/A'),
+                            i,
+                        ])
+
+                    filename = "Export_All.csv"
+
+                    # Writing data to CSV file (append mode)
+                    with open(filename, 'a', newline='') as file:
+                        csvwriter = csv.writer(file)
+                        csvwriter.writerows(rows)  # Append rows
+                    
+                    print(Fore.YELLOW, f'=> EXPORT UPDATED SUCCESSFULLY IN {filename}')
+                    print(Style.RESET_ALL)
+
+                except Exception as error:
+                    print(Fore.RED ,f'Error: {error}')
                 
         perform_comparison(jobArg)
 
