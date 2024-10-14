@@ -52,12 +52,12 @@ def handle_job(ua):
         jobName = target.targetName
         jobArg = target.targetUrl
         logType = f'{jobName}=>{jobArg}'
-        LogModel.objects.create(logName='Ø´Ø±ÙˆØ¹ Ø®Ø²ÛŒØ¯Ù†:', logType=logType,)
+        LogModel.objects.create(logName='شروع خزیدن:', logType=logType,)
         headers = {'User-Agent': ua.random}
         print(Fore.BLUE,  f"START CRAWLING TO => {jobArg}")
         print(Fore.RED, f'{jobArg} SiteMap => {target.target_sitemap}' )
         sitemap_soup = crawler(f'https://{jobArg}/{target.target_sitemap}', headers=headers)
-        LogModel.objects.create(logName='Ú¯Ø²Ø§Ø±Ø´:', logType=f"{len(sitemap_soup)} Ø¹Ø¯Ø¯ Ø³Ø§ÛŒØª Ù…Ù¾ Ù¾ÛŒØ¯Ø§ Ø´Ø¯ {jobName}")
+        LogModel.objects.create(logName='گزارش:', logType=f"{len(sitemap_soup)} عدد سایت مپ پیدا شد {jobName}")
         product_sitemap = get_products_sitemap(sitemap_soup)
         for i in product_sitemap:
             SiteMap.objects.create(target=jobArg, siteMapUrl=i)
@@ -65,20 +65,20 @@ def handle_job(ua):
 
         products_list = get_products_list(product_sitemap, ua)
 
-        product_urls = []
+        ### product_urls = []
 
         for i in products_list:
             if Product.objects.filter(product_url=i).exists():
-                product_urls.append(i)
+                ### product_urls.append(i)
                 print(Fore.YELLOW, f'Product {i} is now exist!')
             else:
                 Product.objects.create(product_url=i, product_parent=jobArg, product_type=target.targetType)
-                product_urls.append(i)
+                ### product_urls.append(i)
                 print(Fore.BLUE, f'Product url: {i} saved to db')
 
-        if product_urls:
-            LogModel.objects.create(logName='Ú¯Ø²Ø§Ø±Ø´:', logType=f"{len(product_urls)} Ø¹Ø¯Ø¯ Ù…Ø­ØµÙˆÙ„ Ù¾ÛŒØ¯Ø§ Ø´Ø¯ {jobName}")
-            for i in product_urls:  
+        ### if product_urls:
+            ### LogModel.objects.create(logName='گزارش:', logType=f"{len(product_urls)} عدد محصول پیدا شد {jobName}")
+            ### for i in product_urls:  
                 info = get_product_info(i, ua)
                 if Product.objects.filter(product_parent=jobArg,  product_price=info['price']).exists():
                     print(Fore.RED ,f'NOT SAVE : Product {info}  in parent shop with prev price us exist! ')
@@ -91,20 +91,20 @@ def handle_job(ua):
                     print(Fore.RED ,f'SAVED: NEW PRODUCT CHANGES\n => {info} <=')
         else:
             print(Fore.RED, 'empty Product url list! ') 
-            LogModel.objects.create(logName='Ú¯Ø²Ø§Ø±Ø´:', logType=f"Ù…Ø­ØµÙˆÙ„ÛŒ ÛŒØ§ÙØª Ù†Ø´Ø¯ {jobName}")
+            LogModel.objects.create(logName='گزارش:', logType=f"محصولی یافت نشد {jobName}")
 
         perform_comparison(jobArg)
 
         count = Product.objects.filter(product_parent=jobArg).count()
         
-        logType = f"Ø§ØªÙ…Ø§Ù… Ú©Ø§Ø± Ø®Ø²Ù†Ø¯Ù‡ => Ø³Ø§ÛŒØª:{jobName} Ùˆ ØªØ¹Ø¯Ø§Ø¯ {count} Ù…Ø­ØµÙˆÙ„ Ø§Ø³Ú©Ù† Ø´Ø¯Ù‡"
+        logType = f"اتمام کار خزنده => سایت:{jobName} و تعداد {count} محصول اسکن شده"
         print(Fore.WHITE, f"\n\n{'^_^' * 5}\n\n{' ' * 4}=> CRAWLING IS FINISH ...")
-        LogModel.objects.create(logName='Ù¾Ø§ÛŒØ§Ù† Ø®Ø²ÛŒØ¯Ù†', logType=logType)
+        LogModel.objects.create(logName='پایان خزیدن', logType=logType)
 
 def perform_comparison(jobArg):
     print(Fore.RED, f"\n =>  START PERFORM COMPARISON!  <=\n")
     response = requests.post('http://0.0.0.0:8080/api/perform_comparison', {}).json()
-    LogModel.objects.create(logName='Ú¯Ø²Ø§Ø±Ø´:', logType="Ù…Ù‚Ø§ÛŒØ³Ù‡ Ø§Ù†Ø¬Ø§Ù… Ø´Ø¯")
+    LogModel.objects.create(logName='گزارش:', logType="مقایسه انجام شد")
     print(Fore.GREEN, f"\n --> COMPARISON  DONE !  <--\n")
     print(response)
 
