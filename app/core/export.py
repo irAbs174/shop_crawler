@@ -1,61 +1,57 @@
-import csv
-from colorama import Fore
+from colorama import Fore, Style
 import requests
-import time
+import json
+import csv
 
-def clean_stock_data(stock_data):
-    """Cleans the 'موجودی' column data."""
-    # Initialize a list to hold cleaned stock entries
-    cleaned_stock = []
-    
-    # Parse each stock item
-    for stock_item in stock_data.get('quantity', []):
-        color = stock_item.get('color', '')
-        quantity = stock_item.get('quantity', '')
-        if color and quantity:
-            # Format each entry as 'color: quantity'
-            cleaned_stock.append(f"{color}: {quantity}")
-    
-    # Join all cleaned entries into a single string, separated by commas
-    return ', '.join(cleaned_stock)
 
-while True:
-    print(Fore.RED, "START EXPORT")
-    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'موجودی', 'آدرس محصول']
-    rows = []
-    
-    response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={})
-    if response.json().get('status'):
-        for product in response.json()['status']:
-            print(Fore.BLUE, product)
-            
-            # Clean the 'موجودی' data before adding it to the rows
-            cleaned_stock = clean_stock_data(product.get('stock', {}))
-            
-            rows.append([
-                product['parent'],
-                f"{product['name']}",
-                product['price'],
-                cleaned_stock,  # Insert the cleaned stock data here
-                product['url'],
-            ])
+class Export:
+    def __init__(self, jobArg):
+        print(Fore.BLUE, "START EXPORT ALL PRODUCTS ...")
+        self.fields = ['ÙØ±ÙˆØ´Ú¯Ø§Ù‡', 'Ù†Ø§Ù… Ù…Ø­ØµÙˆÙ„', 'Ù‚ÛŒÙ…Øª', 'Ù…ÙˆØ¬ÙˆØ¯ÛŒ', 'Ø¢Ø¯Ø±Ø³ Ù…Ø­ØµÙˆÙ„']
+        self.rows = []
+        self.jobArg = jobArg
+
+    def str_to_json(self, x):
+        try:
+            self.qc = json.loads(x.replace("'", '"').replace('\n', ''))
+        except Exception as error:
+            self.qc = {}
+            print(Fore.RED, f"Error: {error}")
         
-    # Name of the CSV file
-    filename = f"Products_Export.csv"
+    def export(self):
+        payload = {
+                'jobArg' : self.jobArg
+                }
+        response = requests.post('http://0.0.0.0:8080/api/get_products_api', data=payload)
+        for i in response.json()['status']:
+            self.str_to_json(i['stock'])
+            for j in self.qc:
+                self.rows.append([
+                    i['parent'],
+                    f"{i['name']} - {j['color']}",
+                    i['price'],
+                    j['quantity'],
+                    i['url'],
+                    ])
+                
+        
+        # name of csv file
+        filename = f"Export_{self.jobArg}.csv"
+        for i in self.rows:
+            print(Fore.GREEN, f"=>  {i}   <=")
+        
+        # writing to csv file
+        with open(filename, 'w') as csvfile:
+            # creating a csv writer object
+            csvwriter = csv.writer(csvfile)
+            # writing the fields
+            csvwriter.writerow(self.fields)
+            # writing the data rows
+            csvwriter.writerows(self.rows)
+            
+        print(Fore.YELLOW, '=> EXPORT GENERATED SECCESSFULY TO > export.csv FILE')
+        print(Style.RESET_ALL)
 
-    with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        # Creating a CSV writer object
-        csvwriter = csv.writer(csvfile)
 
-        # Writing the fields
-        csvwriter.writerow(fields)
-
-        # Writing the data rows
-        csvwriter.writerows(rows)
-
-    print(Fore.GREEN, 'EXPORTED SUCCESSFULLY!')
-    
-    # Sleep for 60 seconds
-    for i in range(60):
-        print(Fore.YELLOW, f"Sleeping ... {i} second(s)!\n")
-        time.sleep(1)
+if __name__ == "__main__":
+    Export('All').export()
