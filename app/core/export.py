@@ -1,55 +1,57 @@
+from colorama import Fore, Style
 import requests
-from openpyxl import Workbook
-import http.server
-import socketserver
-import threading
-import time
+import json
+import csv
 
-# Create a new Workbook
-wb = Workbook()
 
-# Select the active worksheet
-ws = wb.active
+class Export:
+    def __init__(self, jobArg):
+        print(Fore.BLUE, "START EXPORT ALL PRODUCTS ...")
+        self.fields = ['ÙØ±ÙˆØ´Ú¯Ø§Ù‡', 'Ù†Ø§Ù… Ù…Ø­ØµÙˆÙ„', 'Ù‚ÛŒÙ…Øª', 'Ù…ÙˆØ¬ÙˆØ¯ÛŒ', 'Ø¢Ø¯Ø±Ø³ Ù…Ø­ØµÙˆÙ„']
+        self.rows = []
+        self.jobArg = jobArg
 
-def export_products():
-    response = requests.post('http://0.0.0.0:8080/api/get_products_api', data={})
-    data = [[
-        'فروشگاه',
-        'نام کالا',
-        'قیمت کالا',
-        'وضعیت',
-        'موجودی',
-        'صفحه محصول',
-    ]]
-    for i in response.json()['status']:
-        if i['price'] == '0':
-            stock = 'ناموجود'
-        elif i['stock'] == 'ناموجود':
-            stock = 'ناموجود'
-        else:
-            stock = 'موجود'
-        data.append([
-            i['parent'],
-            i['name'],
-            i['price'],
-            i['status'],
-            stock,
-            i['url'],
-        ])
-
-                    # Write data to the worksheet
-        for row in data:
-            print(row)
-            ws.append(row)
+    def str_to_json(self, x):
+        try:
+            self.qc = json.loads(x.replace("'", '"').replace('\n', ''))
+        except Exception as error:
+            self.qc = {}
+            print(Fore.RED, f"Error: {error}")
         
-        # Save the Workbook to a file
-        file_path = 'products1.xlsx'
-        wb.save(file_path)
+    def export(self):
+        payload = {
+                'jobArg' : self.jobArg
+                }
+        response = requests.post('http://0.0.0.0:8080/api/get_products_api', data=payload)
+        for i in response.json()['status']:
+            self.str_to_json(i['stock'])
+            for j in self.qc:
+                self.rows.append([
+                    i['parent'],
+                    f"{i['name']} - {j['color']}",
+                    i['price'],
+                    j['quantity'],
+                    i['url'],
+                    ])
+                
+        
+        # name of csv file
+        filename = f"Export_{self.jobArg}.csv"
+        for i in self.rows:
+            print(Fore.GREEN, f"=>  {i}   <=")
+        
+        # writing to csv file
+        with open(filename, 'w') as csvfile:
+            # creating a csv writer object
+            csvwriter = csv.writer(csvfile)
+            # writing the fields
+            csvwriter.writerow(self.fields)
+            # writing the data rows
+            csvwriter.writerows(self.rows)
+            
+        print(Fore.YELLOW, '=> EXPORT GENERATED SECCESSFULY TO > export.csv FILE')
+        print(Style.RESET_ALL)
 
-    for i in range(600):
-        time.sleep(1)
-        print(f'=> {i} secend ...')
 
 if __name__ == "__main__":
-    # Start the export_products function in a separate thread
-    export_products()
+    Export('All').export()

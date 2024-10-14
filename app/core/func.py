@@ -51,12 +51,12 @@ def get_products_list(products_sitemap_list, ua):
 def get_product_info(product_address, ua):
     print(Fore.GREEN)
     content_html = bs4(R.get(product_address).text, 'html.parser')
-    #options = Options()
-    #options.add_argument('--headless')
-    #options.add_argument('--no-sandbox')
-    #options.add_argument('--disable-dev-shm-usage')
-    #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver = webdriver.Chrome()
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    #driver = webdriver.Chrome()
     driver.get(product_address)
     try:
         if 'buy' in product_address:
@@ -88,14 +88,14 @@ def get_product_info(product_address, ua):
                 
                 color_quantity.append({
                     'color':color,
-                    'quantity' : "ناموجود" if max_qty == '""' else max_qty
+                    'quantity' : "Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯" if max_qty == '""' else max_qty
                     })
             payload =  {
                     "name": driver.title,
                     "price": regular_price,
-                    "status": {'color':'', 'quantity':"ناموجود" if all_unavailable else color_quantity}
+                    "status": {'color':'', 'quantity':"Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯" if all_unavailable else color_quantity}
                     }
-            print(payload)
+            driver.quit()
             return payload
 
         elif '123' in product_address:
@@ -107,7 +107,7 @@ def get_product_info(product_address, ua):
                 price_element = content_html.select('bdi')[1].text
                 persian_number = price_element.split('\xa0')[0]
                 # Translation table: Persian digits to Arabic numerals
-                translation_table = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
+                translation_table = str.maketrans('Û°Û±Û²Û³Û´ÛµÛ¶Û·Û¸Û¹', '0123456789')
                 # Convert Persian digits to Arabic numerals
                 arabic_number = persian_number.translate(translation_table)
                 # Remove any thousand separators
@@ -118,13 +118,13 @@ def get_product_info(product_address, ua):
                 return {
                     'name': product_name,
                     'price': number,
-                    'status' : [{"color": "", "quantity":"موجود"}],
+                    'status' : [{"color": "", "quantity":"Ù…ÙˆØ¬ÙˆØ¯"}],
                 }
             else:
                 return {
                     'name': product_name,
                     'price': 0,
-                    'status' : [{"color": "", "quantity":"ناموجود"}],
+                    'status' : [{"color": "", "quantity":"Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯"}],
                     }
 
         elif 'kifche' in product_address:
