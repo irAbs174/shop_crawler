@@ -64,35 +64,30 @@ def handle_job(ua):
             print(Fore.WHITE ,f'site map {i} saved to db')
 
         products_list = get_products_list(product_sitemap, ua)
-
-        ### product_urls = []
+        product_urls = []
 
         for i in products_list:
             if Product.objects.filter(product_url=i).exists():
-                ### product_urls.append(i)
                 print(Fore.YELLOW, f'Product {i} is now exist!')
             else:
                 Product.objects.create(product_url=i, product_parent=jobArg, product_type=target.targetType)
-                ### product_urls.append(i)
                 print(Fore.BLUE, f'Product url: {i} saved to db')
-
-        ### if product_urls:
-            ### LogModel.objects.create(logName='گزارش:', logType=f"{len(product_urls)} عدد محصول پیدا شد {jobName}")
-            ### for i in product_urls:  
-                info = get_product_info(i, ua)
-                if Product.objects.filter(product_parent=jobArg,  product_price=info['price']).exists():
-                    print(Fore.RED ,f'NOT SAVE : Product {info}  in parent shop with prev price us exist! ')
-                else:
-                    Product.objects.filter(product_parent=jobArg, product_url=i).update(
-                        product_name=f"{info['name']} + {info['status']['color']}",
-                        product_price=info['price'],
-                        product_stock=info['status']['quantity'],
-                    )
-                    print(Fore.RED ,f'SAVED: NEW PRODUCT CHANGES\n => {info} <=')
-        else:
-            print(Fore.RED, 'empty Product url list! ') 
-            LogModel.objects.create(logName='گزارش:', logType=f"محصولی یافت نشد {jobName}")
-
+            
+        for z in range(len(products_list)):
+            LogModel.objects.create(logName='گزارش:', logType=f"{len(product_urls)} عدد محصول پیدا شد {jobName}")
+            product = requests.post('http://0.0.0.0:8080/api/get_products_url', {'jobArg': jobArg}).json()
+            url = product['content'][0]['product_url']
+            info = get_product_info(url, ua)
+            if Product.objects.filter(product_parent=jobArg, product_url=url,  product_price=info['price']).exists():
+                print(Fore.YELLOW ,f'NOT SAVE : Product {info}  in parent shop with prev price us exist! ')
+            else:
+                Product.objects.filter(product_parent=jobArg, product_url=i).update(
+                    product_name=f"{info['name']} + {info['status']['color']}",
+                    product_price=info['price'],
+                    product_stock=info['status']['quantity'],
+                )
+                print(Fore.RED ,f'SAVED: NEW PRODUCT CHANGES\n => {info} <=')
+                
         perform_comparison(jobArg)
 
         count = Product.objects.filter(product_parent=jobArg).count()

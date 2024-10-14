@@ -230,6 +230,33 @@ def get_normal_products_price_api(request):
     return JsonResponse({'status': content, 'success': True})
 
 @csrf_exempt
+def get_products_url(request):
+    # jobArg must be set and like : example.com and HTTP/HTTPS NOT REQUIRED
+    jobArg = request.POST.get("jobArg")
+    content = []
+    if jobArg:
+        # Return list of last updated products_link for specific product_parent
+        # save for updated_at field must be update !
+        product = P.objects.filter(product_parent=jobArg).order_by("updated_at")[0]
+        product.save()
+        # send response to client
+        status = 200
+        success = True
+        content.append({
+            'product_name': product.product_name,
+            'product_url': product.product_url,
+        })
+    else:
+        status = 403
+        success = False
+
+    return JsonResponse({
+        'status' : status,
+        'content': content,
+        'success': success
+    })
+
+@csrf_exempt
 def get_products_api(request):
     jobArg = request.POST.get('jobArg')
     if jobArg == "All" :
