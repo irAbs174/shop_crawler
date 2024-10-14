@@ -14,11 +14,82 @@ from .models import (
 from core.sec import kavenegar_api_key
 from khayyam import JalaliDatetime
 from django.db.models import Q
+from colorama import Fore
 from kavenegar import *
 import random
 import json
 import re
 
+@csrf_exempt
+def store_products(request):
+    try:
+        # Get the parameters from the POST request
+        jobArg = request.POST.get('jobArg')
+        url = request.POST.get('url')
+        info = json.loads(request.POST.get('payload'))  # Parse the payload as JSON
+        
+        # Access the fields from the parsed JSON
+        name = info.get('name')
+        price = info.get('price')
+        status = info.get('status', {}).get('quantity')
+
+        # Update the product in the database
+        pro = P.objects.filter(
+            product_parent=jobArg,
+            product_url=url,
+        ).update(
+            product_name=name,
+            product_price=price,
+            product_stock=status,
+        )
+
+        # Set success message
+        status_code = 200
+        message = f'Product {name} stored to database successfully'
+        success = True
+
+    except Exception as error:
+        # Handle errors
+        status_code = 403
+        message = str(error)
+        success = False
+
+    return JsonResponse({
+        'status': status_code,
+        'message': message,
+        'success': success
+    })
+
+@csrf_exempt
+def perform_export(request):
+    fields = ['فروشگاه', 'نام محصول', 'قیمت', 'موجودی', 'آدرس محصول']
+    jobArg = request.POST.get('jobArg')  # Get job argument from POST request
+    products = P.objects.all()  # Query all products
+    rows = []  # Initialize an empty list to store product data rows
+    
+    for product in products:
+        stock = product.product_stock  # Access product stock
+        if stock:
+            try:
+                # Safely load JSON from the stock string, handling single quotes
+                stock_json = json.loads(stock.replace("'", '"').replace('\n', ''))
+                
+                # Iterate over each variant in the stock data
+                for variant in stock_json:
+                    rows.append({
+                        'parent': product.product_parent,  # Add product parent
+                        'name': f"{product.product_name} - {variant.get('color', 'N/A')}",  # Add product name and color
+                        'price': product.product_price,  # Add product price
+                        'quantity': variant.get('quantity', 'N/A'),  # Add product quantity
+                        'url': product.product_url  # Add product URL
+                    })
+            except Exception as error:
+                # Capture the error and append a detailed message for debugging
+                rows.append({'Error': str(error)})
+    
+    # Return a JSON response with the rows and success status
+    return JsonResponse({'status': rows, 'success': True})
+            
 @csrf_exempt
 def get_target_products_count(request):
     targetUrl = request.POST.get('url')

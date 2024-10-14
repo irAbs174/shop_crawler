@@ -7,8 +7,7 @@ import csv
 class Export:
     def __init__(self, jobArg):
         print(Fore.BLUE, "START EXPORT ALL PRODUCTS ...")
-        self.fields = ['ÙØ±ÙˆØ´Ú¯Ø§Ù‡', 'Ù†Ø§Ù… Ù…Ø­ØµÙˆÙ„', 'Ù‚ÛŒÙ…Øª', 'Ù…ÙˆØ¬ÙˆØ¯ÛŒ', 'Ø¢Ø¯Ø±Ø³ Ù…Ø­ØµÙˆÙ„']
-        self.rows = []
+        self.fields = ['فروشگاه', 'نام محصول', 'قیمت', 'موجودی', 'آدرس محصول']
         self.jobArg = jobArg
 
     def str_to_json(self, x):
@@ -22,11 +21,12 @@ class Export:
         payload = {
                 'jobArg' : self.jobArg
                 }
-        response = requests.post('http://0.0.0.0:8080/api/get_products_api', data=payload)
+        response = requests.post('http://0.0.0.0:8080/api/get_products_api', payload)
+        rows = []
         for i in response.json()['status']:
             self.str_to_json(i['stock'])
             for j in self.qc:
-                self.rows.append([
+                rows.append([
                     i['parent'],
                     f"{i['name']} - {j['color']}",
                     i['price'],
@@ -37,7 +37,7 @@ class Export:
         
         # name of csv file
         filename = f"Export_{self.jobArg}.csv"
-        for i in self.rows:
+        for i in rows:
             print(Fore.GREEN, f"=>  {i}   <=")
         
         # writing to csv file
@@ -47,9 +47,9 @@ class Export:
             # writing the fields
             csvwriter.writerow(self.fields)
             # writing the data rows
-            csvwriter.writerows(self.rows)
+            csvwriter.writerows(rows)
             
-        print(Fore.YELLOW, '=> EXPORT GENERATED SECCESSFULY TO > export.csv FILE')
+        print(Fore.YELLOW, f'=> EXPORT GENERATED SECCESSFULY TO > Export_{self.jobArg}.csv FILE')
         print(Style.RESET_ALL)
 
 
