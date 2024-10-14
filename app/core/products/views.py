@@ -23,8 +23,8 @@ import re
 def get_target_products_count(request):
     targetUrl = request.POST.get('url')
     all_target_products_count = P.objects.filter(product_parent=targetUrl).count()
-    stock_count = P.objects.filter(product_parent=targetUrl, product_stock='Ù…ÙˆØ¬ÙˆØ¯').count()
-    out_stock_count = P.objects.filter(product_parent=targetUrl, product_stock='Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯').count()
+    stock_count = P.objects.filter(product_parent=targetUrl).count()
+    out_stock_count = P.objects.filter(product_parent=targetUrl, product_stock='ناموجود').count()
     return JsonResponse({
         'status': 200,
         'all_target_products_count':all_target_products_count,
@@ -47,10 +47,9 @@ def get_count_data(request):
     all_target_count = TargetModel.objects.all().count()
     main_target = TargetModel.objects.filter(targetType='main')[0].targetName
     all_products_count = P.objects.all().count()
-    down_products_count = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ø²ÛŒØ± Ú©Ø±Ø¯Ù† Ù‚ÛŒÙ…Øª:").count()
-    up_products_count = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‚ÛŒÙ…Øª Ø¨Ø§Ù„Ø§ØªØ±:").count()
-    equals_products_count = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‡Ù… Ù‚ÛŒÙ…Øª:").count()
-
+    down_products_count = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:").count()
+    up_products_count = LogModel.objects.filter(logName="گزارش قیمت بالاتر:").count()
+    equals_products_count = LogModel.objects.filter(logName="گزارش هم قیمت:").count()
     context = {
         'all_target_count':all_target_count,
         'main_target':main_target,
@@ -75,7 +74,7 @@ def get_chat_id(request):
 
 @csrf_exempt
 def newLogs(requests):
-    logs = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ø²ÛŒØ± Ú©Ø±Ø¯Ù† Ù‚ÛŒÙ…Øª:", send_status=None)
+    logs = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:", send_status=None)
     ctx = []
     for log in logs:
         if not log.send_status:
@@ -99,7 +98,7 @@ def register(request):
     first_name = request.POST.get('first_name')
     last_name = request.POST.get('last_name')
     if BotUsers.objects.filter(userId=userId).exists():
-        content = {'status':'Ú©Ø§Ø±Ø¨Ø± Ø§Ø² Ù‚Ø¨Ù„ Ù…ÙˆØ¬ÙˆØ¯ Ø§Ø³Øª', 'success': True}
+        content = {'status':'کاربر از قبل موجود است', 'success': True}
     else:
         BotUsers.objects.create(
             userId = userId,
@@ -107,7 +106,7 @@ def register(request):
             first_name = first_name,
             last_name = last_name
         )
-        content = {'status': 'Ú©Ø§Ø±Ø¨Ø± Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø«Ø¨Øª Ø´Ø¯Ù‡', 'success': True}
+        content = {'status': 'کاربر با موفقیت ثبت شده', 'success': True}
     return JsonResponse(content)
 
 @csrf_exempt
@@ -126,16 +125,16 @@ def single_comparison(request):
                 }
                 ctx.append(item)
     if ctx == []:
-        ctx = ['Ú©Ø§Ù„Ø§ÛŒ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± Ù¾ÛŒØ¯Ø§ Ù†Ø´Ø¯']
+        ctx = ['کالای مورد نظر پیدا نشد']
     return JsonResponse({'status': ctx, 'success': True})
 
 @csrf_exempt
 def perform_comparison(request):
     # first clear log comparison logs
     print('clear old comparison')
-    LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‡Ù… Ù‚ÛŒÙ…Øª:").delete()
-    LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‚ÛŒÙ…Øª Ø¨Ø§Ù„Ø§ØªØ±:").delete()
-    LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ø²ÛŒØ± Ú©Ø±Ø¯Ù† Ù‚ÛŒÙ…Øª:").delete()
+    LogModel.objects.filter(logName="گزارش هم قیمت:").delete()
+    LogModel.objects.filter(logName="گزارش قیمت بالاتر:").delete()
+    LogModel.objects.filter(logName="گزارش زیر کردن قیمت:").delete()
 
     # now comparison :
     print("Starting perform_comparison")
@@ -164,16 +163,16 @@ def perform_comparison(request):
                         
                         if us_dic_price < main_product_price:
                             LogModel.objects.create(
-                                        logName="Ú¯Ø²Ø§Ø±Ø´ Ù‚ÛŒÙ…Øª Ø¨Ø§Ù„Ø§ØªØ±:",
-                                        logType=f'Ù…Ø­ØµÙˆÙ„ Ù…Ø±Ø¬Ø¹ :{us_dic.product_name}\nÙ‚ÛŒÙ…Øª Ù…Ø±Ø¬Ø¹:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
+                                        logName="گزارش قیمت بالاتر:",
+                                        logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
                                     )
                             P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
                                         product_status="up",
                                     )
                         elif us_dic_price == main_product_price:
                             LogModel.objects.create(
-                                        logName="Ú¯Ø²Ø§Ø±Ø´ Ù‡Ù… Ù‚ÛŒÙ…Øª:",
-                                        logType=f'Ù…Ø­ØµÙˆÙ„ Ù…Ø±Ø¬Ø¹ :{us_dic.product_name}\nÙ‚ÛŒÙ…Øª Ù…Ø±Ø¬Ø¹:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
+                                        logName="گزارش هم قیمت:",
+                                        logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
                                     )
                             P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
                                 product_status="equals",
@@ -181,20 +180,19 @@ def perform_comparison(request):
                         else:
                             if main_product_price != 0:
                                 LogModel.objects.create(
-                                            logName="Ú¯Ø²Ø§Ø±Ø´ Ø²ÛŒØ± Ú©Ø±Ø¯Ù† Ù‚ÛŒÙ…Øª:",
-                                            logType=f'Ù…Ø­ØµÙˆÙ„ Ù…Ø±Ø¬Ø¹ :{us_dic.product_name}\nÙ‚ÛŒÙ…Øª Ù…Ø±Ø¬Ø¹:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',
-                                        )
+                                            logName="گزارش زیر کردن قیمت:",
+                                            logType=f'محصول مرجع :{us_dic.product_name}\nقیمت مرجع:{us_dic.product_price}\n {main_product.product_name}:{main_product.product_price}',                                        )
                                 P.objects.filter(product_type="main", product_name=us_dic.product_name).update(
                                             product_status="down",
                                 )
     except Exception as e:
-        return JsonResponse({'status': 'Ø¯Ø± Ø­Ø§Ù„ Ø­Ø§Ø¸Ø± Ø±Ø¨Ø§Øª Ø¯Ø± Ø­Ø§Ù„ ØªÚ©Ù…ÛŒÙ„ Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø§Ø³Øª. Ù„Ø·ÙØ§ Ú©Ù…ÛŒ Ø¨Ø¹Ø¯ Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯', 'success': False})
+        return JsonResponse({'status': 'در حال حاظر ربات در حال تکمیل اطلاعات است. لطفا کمی بعد دوباره تلاش کنید', 'success': False})
 
-    return JsonResponse({'status': 'Ù…Ù‚Ø§ÛŒØ³Ù‡ Ø§Ù†Ø¬Ø§Ù… Ø´Ø¯', 'success': True})
+    return JsonResponse({'status': 'مقایسه انجام شد', 'success': True})
 
 @csrf_exempt
 def get_down_products_price_api(request):
-    down_products = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ø²ÛŒØ± Ú©Ø±Ø¯Ù† Ù‚ÛŒÙ…Øª:")
+    down_products = LogModel.objects.filter(logName="گزارش زیر کردن قیمت:")
     content = []
     if down_products:
         for i in down_products:
@@ -209,7 +207,7 @@ def get_down_products_price_api(request):
 
 @csrf_exempt
 def get_equals_products_price_api(request):
-    equals_products = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‡Ù… Ù‚ÛŒÙ…Øª:")
+    equals_products = LogModel.objects.filter(logName="گزارش هم قیمت:")
     content = []
     for i in equals_products:
         content.append({
@@ -221,7 +219,7 @@ def get_equals_products_price_api(request):
 
 @csrf_exempt
 def get_normal_products_price_api(request):
-    up_products = LogModel.objects.filter(logName="Ú¯Ø²Ø§Ø±Ø´ Ù‚ÛŒÙ…Øª Ø¨Ø§Ù„Ø§ØªØ±:")
+    up_products = LogModel.objects.filter(logName="گزارش قیمت بالاتر:")
     content = []
     for i in up_products:
         content.append({
@@ -230,6 +228,33 @@ def get_normal_products_price_api(request):
             'lastLog': JalaliDatetime(i.lastLog).strftime('%Y-%m-%d %H:%M:%S'),
         })
     return JsonResponse({'status': content, 'success': True})
+
+@csrf_exempt
+def get_products_url(request):
+    # jobArg must be set and like : example.com and HTTP/HTTPS NOT REQUIRED
+    jobArg = request.POST.get("jobArg")
+    content = []
+    if jobArg:
+        # Return list of last updated products_link for specific product_parent
+        # save for updated_at field must be update !
+        product = P.objects.filter(product_parent=jobArg).order_by("updated_at")[0]
+        product.save()
+        # send response to client
+        status = 200
+        success = True
+        content.append({
+            'product_name': product.product_name,
+            'product_url': product.product_url,
+        })
+    else:
+        status = 403
+        success = False
+
+    return JsonResponse({
+        'status' : status,
+        'content': content,
+        'success': success
+    })
 
 @csrf_exempt
 def get_products_api(request):
@@ -261,7 +286,7 @@ def add_us_products_api(request):
         us_product_name = name,
         us_product_price = price,
     )
-    return JsonResponse({'status': 'Ø§ÙØ²ÙˆØ¯Ù‡ Ø´Ø¯', 'success': True})
+    return JsonResponse({'status': 'افزوده شد', 'success': True})
 
 @csrf_exempt
 def get_us_products_api(request):
@@ -293,7 +318,7 @@ def add_jobs_api(request):
         jobName = jobName,
         jobArg = jobArg,
     )
-    return JsonResponse({'status':  'Ø§ÙØ²ÙˆØ¯Ù‡ Ø´Ø¯', 'success': True})
+    return JsonResponse({'status':  'افزوده شد', 'success': True})
 
 @csrf_exempt
 def get_logs_api(request):
@@ -333,7 +358,7 @@ def add_target_api(request):
         targetUrl = url,
         targetType = target_type
     )
-    return JsonResponse({'status': 'Ø§ÙØ²ÙˆØ¯Ù‡ Ø´Ø¯', 'success': True})
+    return JsonResponse({'status': 'افزوده شد', 'success': True})
 
 @csrf_exempt
 def auth(request):
@@ -380,7 +405,7 @@ def auth_send_otp(request):
                     print(e)
                 except HTTPException as e: 
                     print(e)
-                return JsonResponse({'status': 'Ú©Ø¯ Ø§Ø±Ø³Ø§Ù„ Ø´Ø¯', 'phone_number': phone_number, 'success': True})
+                return JsonResponse({'status': ''کد ارسال شد',', 'phone_number': phone_number, 'success': True})
             else:
                 pass
         except json.JSONDecodeError:

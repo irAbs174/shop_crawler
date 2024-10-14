@@ -17,7 +17,8 @@ from .views import (
     get_chat_id,
     get_count_data,
     get_main_target,
-    get_target_products_count
+    get_target_products_count,
+    get_products_url
 )
 
 urlpatterns = [
@@ -38,5 +39,6 @@ urlpatterns = [
     path('get_chat_id', get_chat_id),
     path('get_count_data', get_count_data),
     path('get_main_target', get_main_target),
-    path('get_target_products_count', get_target_products_count)
+    path('get_target_products_count', get_target_products_count),
+    path('get_products_url', get_products_url)
 ]

@@ -50,13 +50,13 @@ def get_products_list(products_sitemap_list, ua):
 
 def get_product_info(product_address, ua):
     print(Fore.GREEN)
-    content_html = bs4(R.get(product_address).text, 'html.parser')
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    #driver = webdriver.Chrome()
+    #content_html = bs4(R.get(product_address).text, 'html.parser')
+    #options = Options()
+    #options.add_argument('--headless')
+    #options.add_argument('--no-sandbox')
+    #options.add_argument('--disable-dev-shm-usage')
+    #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver = webdriver.Chrome()
     driver.get(product_address)
     try:
         if 'buy' in product_address:
