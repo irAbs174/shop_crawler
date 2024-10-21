@@ -88,12 +88,12 @@ def get_product_info(product_address, ua):
                 
                 color_quantity.append({
                     'color':color,
-                    'quantity' : "Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯" if max_qty == '""' else max_qty
+                    'quantity' : "ناموجود" if max_qty == '""' else max_qty
                     })
             payload =  {
                     "name": driver.title,
                     "price": regular_price,
-                    "status": {'color':'', 'quantity':"Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯" if all_unavailable else color_quantity}
+                    "status": {'color':'', 'quantity':"ناموجود" if all_unavailable else color_quantity}
                     }
             driver.quit()
             return payload
@@ -124,7 +124,7 @@ def get_product_info(product_address, ua):
                 return {
                     'name': product_name,
                     'price': 0,
-                    'status' : [{"color": "", "quantity":"Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯"}],
+                    'status' : [{"color": "", "quantity":"ناموجود"}],
                     }
 
         elif 'kifche' in product_address:
