@@ -451,36 +451,3 @@ def auth_send_otp(request):
         return JsonResponse(response_data)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
-'''
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            phone = data.get('phoneNumbers', [])
-            phone_list = [
-                '09129585714',
-                '09121578711',
-            ]
-            four_digit_code = random.randint(1000, 9999)
-            if phone in phone_list:
-                try:
-                    api = KavenegarAPI(f'{kavenegar_api_key}')
-                    params = {
-                        'receptor': phone,
-                        'template': 'kikpickLogin',
-                        'token': four_digit_code,
-                        'type': 'sms',
-                    }   
-                    response = api.verify_lookup(params)
-                    print(response)
-                except APIException as e: 
-                    print(e)
-                except HTTPException as e: 
-                    print(e)
-                return JsonResponse({'status': ''کد ارسال شد',', 'phone_number': phone_number, 'success': True})
-            else:
-                pass
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    else:
-        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-'''

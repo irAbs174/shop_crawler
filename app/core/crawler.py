@@ -86,7 +86,7 @@ def handle_job(ua):
                     res = requests.post('http://0.0.0.0:8080/api/store_products', {
                         'jobArg': jobArg,
                         'payload': json.dumps(info),
-                        'url': i
+                        'url': url
                     }).json()
                     # Write Changes to csv
                     rows = []
@@ -97,7 +97,7 @@ def handle_job(ua):
                             f"{info['name']} - {variant.get('color', 'N/A')}",
                             info['price'],
                             variant.get('quantity', 'N/A'),
-                            i,
+                            url,
                         ])
 
                     filename = "Export_All.csv"
