@@ -101,7 +101,7 @@ def handle_job(ua):
                         ])
 
                     filename = "Export_All.csv"
-
+                    
                     # Writing data to CSV file (append mode)
                     with open(filename, 'a', newline='') as file:
                         csvwriter = csv.writer(file)
